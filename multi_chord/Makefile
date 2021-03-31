@@ -21,7 +21,7 @@ SHARED = -shared
 # --------------------------------------------------------------
 
 PREFIX  ?= /usr/local
-DESTDIR ?=
+DESTDIR ?= /lib/lv2
 
 # --------------------------------------------------------------
 # Default target is to build all plugins
@@ -45,9 +45,9 @@ clean:
 # --------------------------------------------------------------
 
 install: build
-	install -d $(DESTDIR)$(PREFIX)/lib/lv2/riban.lv2
+	install -d $(PREFIX)$(DESTDIR)/riban.lv2
 
-	install -m 644 multi_chord.lv2/*.so  $(DESTDIR)$(PREFIX)/lib/lv2/riban/multi_chord.lv2/
-	install -m 644 multi_chord.lv2/*.ttl $(DESTDIR)$(PREFIX)/lib/lv2/riban.multi_chord.lv2/
+	install -m 644 multi_chord.lv2/*.so  $(PREFIX)$(DESTDIR)/riban.lv2/
+	install -m 644 multi_chord.lv2/*.ttl $(PREFIX)$(DESTDIR)/riban.lv2/
 
 # --------------------------------------------------------------
