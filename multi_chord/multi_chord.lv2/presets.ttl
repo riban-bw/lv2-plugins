@@ -1,0 +1,350 @@
+@prefix atom: <http://lv2plug.in/ns/ext/atom#> .
+@prefix lv2: <http://lv2plug.in/ns/lv2core#> .
+@prefix pset: <http://lv2plug.in/ns/ext/presets#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix state: <http://lv2plug.in/ns/ext/state#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<urn:riban.multi_chord.none>
+	a pset:Preset ;
+	lv2:appliesTo <urn:riban.multi_chord> ;
+	rdfs:label "None" ;
+	lv2:port [
+		lv2:symbol "offset_a1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_a2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_a3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_as1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_as2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_as3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_b1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_b2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_b3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_c1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_c2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_c3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_cs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_cs2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_cs3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_d1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_d2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_d3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_ds1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_ds2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_ds3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_e1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_e2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_e3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_f1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_f2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_f3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_fs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_fs2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_fs3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_g1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_g2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_g3" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_gs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_gs2" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_gs3" ;
+		pset:value 0.0
+	] .
+
+<urn:riban.multi_chord.major>
+	a pset:Preset ;
+	lv2:appliesTo <urn:riban.multi_chord> ;
+	rdfs:label "Major Triad" ;
+	lv2:port [
+		lv2:symbol "offset_a1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_a2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_a3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_as1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_as2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_as3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_b1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_b2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_b3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_c1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_c2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_c3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_cs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_cs2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_cs3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_d1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_d2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_d3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_ds1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_ds2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_ds3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_e1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_e2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_e3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_f1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_f2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_f3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_fs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_fs2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_fs3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_g1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_g2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_g3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_gs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_gs2" ;
+		pset:value 4.0
+	] , [
+		lv2:symbol "offset_gs3" ;
+		pset:value 7.0
+	] .
+
+<urn:riban.multi_chord.minor>
+	a pset:Preset ;
+	lv2:appliesTo <urn:riban.multi_chord> ;
+	rdfs:label "Major Triad" ;
+	lv2:port [
+		lv2:symbol "offset_a1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_a2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_a3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_as1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_as2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_as3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_b1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_b2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_b3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_c1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_c2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_c3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_cs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_cs2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_cs3" ;
+		pset:value 8.0
+	] , [
+		lv2:symbol "offset_d1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_d2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_d3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_ds1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_ds2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_ds3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_e1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_e2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_e3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_f1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_f2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_f3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_fs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_fs2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_fs3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_g1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_g2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_g3" ;
+		pset:value 7.0
+	] , [
+		lv2:symbol "offset_gs1" ;
+		pset:value 0.0
+	] , [
+		lv2:symbol "offset_gs2" ;
+		pset:value 3.0
+	] , [
+		lv2:symbol "offset_gs3" ;
+		pset:value 7.0
+	] .
+

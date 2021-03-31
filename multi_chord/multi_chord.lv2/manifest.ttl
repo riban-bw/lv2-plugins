@@ -1,0 +1,32 @@
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
+@prefix atom: <http://lv2plug.in/ns/ext/atom#> .
+@prefix pset: <http://lv2plug.in/ns/ext/presets#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix state: <http://lv2plug.in/ns/ext/state#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+@prefix lv2:  <http://lv2plug.in/ns/lv2core#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ui:   <http://lv2plug.in/ns/extensions/ui#> .
+
+<urn:riban.multi_chord>
+	a lv2:Plugin ;
+	lv2:binary <multi_chord.so>  ;
+	rdfs:seeAlso <multi_chord.ttl> .
+
+<urn:riban.multi_chord.none>
+    a pset:Preset ;
+    lv2:appliesTo <urn:riban.multi_chord> ;
+	rdfs:seeAlso <multi_chord.ttl> .
+
+<urn:riban.multi_chord.major>
+    a pset:Preset ;
+    lv2:appliesTo <urn:riban.multi_chord> ;
+    rdfs:seeAlso <presets.ttl> .
+
+<urn:riban.multi_chord.minor>
+    a pset:Preset ;
+    lv2:appliesTo <urn:riban.multi_chord> ;
+    rdfs:seeAlso <presets.ttl> .
