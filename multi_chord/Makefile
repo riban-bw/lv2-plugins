@@ -46,8 +46,6 @@ clean:
 
 install: build
 	install -d $(PREFIX)$(DESTDIR)/riban.lv2
-
-	install -m 644 multi_chord.lv2/*.so  $(PREFIX)$(DESTDIR)/riban.lv2/
-	install -m 644 multi_chord.lv2/*.ttl $(PREFIX)$(DESTDIR)/riban.lv2/
+	install -m 644 multi_chord.lv2/*  $(PREFIX)$(DESTDIR)/riban.lv2/
 
 # --------------------------------------------------------------

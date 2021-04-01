@@ -113,6 +113,7 @@ static void run(LV2_Handle instance, uint32_t sample_count) {
 
 	// Read incoming events
 	uint8_t base_note;
+	int note, velocity;
 	LV2_ATOM_SEQUENCE_FOREACH (self->midi_in, ev) {
 		if (ev->body.type == self->uri_midi) {
 			const uint8_t* const msg = (const uint8_t*)(ev + 1);
@@ -125,11 +126,19 @@ static void run(LV2_Handle instance, uint32_t sample_count) {
 						int offset = (int)*(self->offset_map[base_note][i]);
 						if(i > 0 && offset == (int)*(self->offset_map[base_note][0]))
 							continue; // Skip if note not configured (same as root note)
+						note = msg[1] + offset;
+						if(note > 127 || note < 0)
+							continue; // Transposed note is out of range
+						velocity = msg[2];
+						if(velocity > 127)
+							velocity = 127; // Not too loud
+						if (velocity < 1)
+							velocity = 1; // Not too quiet (just right!)
 						MIDINoteEvent midi_note;
 						midi_note.event = *ev; // Does not do a deep copy so need to set msg values
 						midi_note.msg[0] = msg[0]; // Same status
-						midi_note.msg[1] = msg[1] + offset; // Transpose
-						midi_note.msg[2] = msg[2]; // Same velocity
+						midi_note.msg[1] = note;
+						midi_note.msg[2] = velocity;
 						lv2_atom_sequence_append_event(self->midi_out, out_capacity, &midi_note.event);
 					}
 				break;
