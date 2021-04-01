@@ -30,6 +30,7 @@ typedef struct {
 	const LV2_Atom_Sequence*	midi_in;
 	LV2_Atom_Sequence*			midi_out;
 	float*						offset_map[12][MAX_NOTES];
+	float*						velocity_map[12][MAX_NOTES];
 
 	// URIs
 	LV2_URID uri_midi;
@@ -51,8 +52,12 @@ static void connect_port(LV2_Handle instance, uint32_t port, void* data) {
 	// If ttl file does not list all ports then the map will not be fully populated which will trigger segfault when corresponding note is played
 	for(uint32_t i=0; i<12; ++i)
 		for(uint32_t j=0; j<MAX_NOTES; ++j)
+		{
 			if(port == 2 + i * MAX_NOTES + j)
 				self->offset_map[i][j] = (float*)data;
+			if(port == 50 + i * MAX_NOTES + j)
+				self->velocity_map[i][j] = (float*)data;
+		}
 }
 
 static LV2_Handle instantiate(const LV2_Descriptor*     descriptor,
@@ -129,11 +134,11 @@ static void run(LV2_Handle instance, uint32_t sample_count) {
 						note = msg[1] + offset;
 						if(note > 127 || note < 0)
 							continue; // Transposed note is out of range
-						velocity = msg[2];
-						if(velocity > 127)
-							velocity = 127; // Not too loud
+						velocity = *self->velocity_map[base_note][i] * msg[2];
 						if (velocity < 1)
-							velocity = 1; // Not too quiet (just right!)
+							continue; // Don't play extremely quite notes
+						if(velocity > 127)
+							velocity = 127;
 						MIDINoteEvent midi_note;
 						midi_note.event = *ev; // Does not do a deep copy so need to set msg values
 						midi_note.msg[0] = msg[0]; // Same status
