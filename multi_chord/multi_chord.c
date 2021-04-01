@@ -13,7 +13,7 @@
 #include <stdlib.h> //provides calloc, free
 
 #define URI "urn:riban.multi_chord"
-#define MAX_NOTES 3 // Quantity of notes in chord - need to change ttl if changing this value
+#define MAX_NOTES 4 // Quantity of notes in chord - need to change ttl if changing this value
 
 enum
 {
