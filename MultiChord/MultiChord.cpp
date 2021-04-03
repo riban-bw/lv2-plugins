@@ -95,7 +95,7 @@ protected:
     */
     int64_t getUniqueId() const override
     {
-        return d_cconst('r', 'i', 'b', 'm');
+        return (0b011101000111001101010100011100111101 << 28) | 1; // 'riban' in Morse Code + plugin index (1 for first plugin, 268435455 for last!)
     }
 
    /* --------------------------------------------------------------------------------------------------------
