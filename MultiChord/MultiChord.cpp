@@ -93,13 +93,15 @@ class MultiChord : public Plugin
             return d_version(0, 1, 0);
         }
 
+
        /**
           Get the plugin unique Id.
           This value is used by LADSPA, DSSI and VST plugin formats.
         */
         int64_t getUniqueId() const override
         {
-            return 'r'<<7 | 'i'<<6 | 'b'<<5 | 'a'<<4 | 'n'<<3 || 1;
+            int64_t nValue = ('r' << 24) | ('i' << 16) | ('b' << 8) | ('a' << 0);
+            return (nValue << 32) | ('n' << 24) | 1;
         }
 
        /* --------------------------------------------------------------------------------------------------------
