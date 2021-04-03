@@ -7,7 +7,7 @@
 # --------------------------------------------------------------
 # Project name, used for binaries
 
-NAME = riban_midi_multichord
+NAME = ribanMultiChord
 
 # --------------------------------------------------------------
 # Files to build
