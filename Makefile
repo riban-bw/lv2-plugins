@@ -39,7 +39,9 @@ utils/lv2_ttl_generator:
 
 # --------------------------------------------------------------
 
-clean:
+clean: clean_plugin clean_dpf
+
+clean_plugin:
 	$(MAKE) clean -C MultiChord
 	rm -rf bin build
 
@@ -48,6 +50,7 @@ clean_dpf:
 	$(MAKE) clean -C DPF/utils/lv2-ttl-generator
 
 install: plugins
+	mkdir -p $(LV2_INSTALL_PREFIX)
 	cp -r bin/lv2/* $(LV2_INSTALL_PREFIX)/
 
 # --------------------------------------------------------------
