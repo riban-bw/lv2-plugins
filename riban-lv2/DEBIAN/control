@@ -1,0 +1,10 @@
+Package: riban-lv2
+Version: 1.0.0
+Section: sound
+Priority: optional
+Architecture: armhf
+Essential: no
+Installed-Size: 212
+Maintainer: Brian Walton <brian@riban.co.uk>
+Description: LV2 plugins provided by riban
+ MultiChord - Trigger chords from single MIDI note

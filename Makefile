@@ -53,6 +53,11 @@ install: plugins
 	mkdir -p $(LV2_INSTALL_PREFIX)
 	cp -r bin/lv2/* $(LV2_INSTALL_PREFIX)/
 
+deb: plugins
+	mkdir -p riban-lv2$(LV2_INSTALL_PREFIX)
+	cp -r bin/lv2/* riban-lv2$(LV2_INSTALL_PREFIX)/
+	dpkg-deb --build riban-lv2 bin
+
 # --------------------------------------------------------------
 
 .PHONY: dgl plugins
