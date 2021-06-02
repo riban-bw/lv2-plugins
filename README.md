@@ -7,15 +7,8 @@ A selection of LV2 plugins for Zynthian (and other LV2 hosts).
 Framework: DISTRHO
 Targets: LV2, VST, jackd standalone
 ```
-Multi-chord is a MIDI processor. It will create a chord from each MIDI note received. Each incoming note C,C#,D,D#,E,F,F#,G,G#,A,A#,B can trigger any chord, individually configurable, e.g. incoming MIDI 'C' may trigger a C major chord whilst incoming MIDI 'C#' could trigger A minor. Each chord may have up to 4 notes. Any note configured the same as the first will not sound, e.g. setting C1='C', C2='E', C3='C', C4='C' will play C + E when a MIDI 'C' is received.
-
-The default is to pass all MIDI events uneffected. Some presets are included for some common chord patters, e.g. major triad, minor triad, etc.
-
-Each note for each chord may be selected from an octave either side of the root (played) note. Chord patterns repeat for each octave, e.g. incoming MIDI 'C' will trigger the same chord but in different registers when played across the keyboard.
-
-Velocity for each note of the chord may be set relative to the MIDI trigger note in the range x0.5 .. x2.
-
-The plugin may be recompiled with fewer or greater quantity of notes in each chord. This will change the parameter layout and invalidate any presets.
+MIDI processor to create a chord from each MIDI note received.
+[Documentation](https://github.com/riban-bw/lv2/tree/main/MultiChord)
 
 ## Installation
 
