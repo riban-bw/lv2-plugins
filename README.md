@@ -8,6 +8,7 @@ Framework: DISTRHO
 Targets: LV2, VST, jackd standalone
 ```
 MIDI processor to create a chord from each MIDI note received.
+
 [Documentation](https://github.com/riban-bw/lv2/tree/main/MultiChord)
 
 ## Installation
