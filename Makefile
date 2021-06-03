@@ -8,7 +8,7 @@ include DPF/Makefile.base.mk
 
 LV2_INSTALL_PREFIX  ?= /usr/local/lib/lv2
 
-all: dgl plugins gen
+all: dgl plugins gen deb
 
 # --------------------------------------------------------------
 
@@ -39,7 +39,7 @@ utils/lv2_ttl_generator:
 
 # --------------------------------------------------------------
 
-clean: clean_plugin clean_dpf
+clean: clean_plugin clean_dpf clean_deb
 
 clean_plugin:
 	$(MAKE) clean -C MultiChord
@@ -48,6 +48,9 @@ clean_plugin:
 clean_dpf:
 	$(MAKE) clean -C DPF/dgl
 	$(MAKE) clean -C DPF/utils/lv2-ttl-generator
+
+clean_deb:
+	rm -rf riban-lv2$(LV2_INSTALL_PREFIX)
 
 install: plugins
 	mkdir -p $(LV2_INSTALL_PREFIX)
