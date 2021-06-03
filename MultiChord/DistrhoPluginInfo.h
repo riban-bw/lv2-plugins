@@ -17,7 +17,6 @@
 #ifndef DISTRHO_PLUGIN_INFO_H_INCLUDED
 #define DISTRHO_PLUGIN_INFO_H_INCLUDED
 
-#define DISTRHO_PLUGIN_BRAND "DISTRHO"
 #define DISTRHO_PLUGIN_NAME  "MultiChord"
 #define DISTRHO_PLUGIN_URI   "urn:riban.multichord"
 
