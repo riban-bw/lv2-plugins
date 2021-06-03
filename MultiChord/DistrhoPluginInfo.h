@@ -19,6 +19,7 @@
 
 #define DISTRHO_PLUGIN_NAME  "MultiChord"
 #define DISTRHO_PLUGIN_URI   "urn:riban.multichord"
+#define DISTRHO_PLUGIN_LV2_CATEGORY "lv2:MIDIPlugin"
 
 #define DISTRHO_PLUGIN_HAS_UI           0
 #define DISTRHO_PLUGIN_IS_RT_SAFE       1
