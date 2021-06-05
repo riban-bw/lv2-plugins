@@ -6,7 +6,7 @@
 
 include DPF/Makefile.base.mk
 
-LV2_INSTALL_PREFIX  ?= /usr/local/lib/lv2
+LV2_INSTALL_PREFIX  ?= /usr/lib/lv2
 
 all: dgl plugins gen deb
 
