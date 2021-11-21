@@ -31,4 +31,4 @@ To create a Debian package (currently armhf LV2 only):
 make deb
 ```
 
-The pacakge is created in the bin directory.
+The package is created in the bin directory.
