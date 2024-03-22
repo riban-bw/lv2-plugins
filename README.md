@@ -17,7 +17,7 @@ To install riban lv2 plugins.
 
 Clone repository and build using make:
 ```
-git clone --recursive https://github.com/riban-bw/lv2.git riban-lv2
+git clone --recursive https://github.com/riban-bw/lv2-plugins.git riban-lv2
 cd riban-lv2
 make
 sudo make install
