@@ -117,7 +117,7 @@ class MultiChord : public Plugin
             {
                 // Note map
                 sName = String("Offset ") + m_saNoteNames[nChord] + String(nNote + 1);
-                parameter.hints = kParameterIsAutomable | kParameterIsInteger;
+                parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
                 parameter.ranges.min = -12.0f;
                 parameter.ranges.max = 12.0f;
                 parameter.ranges.def = 0.0f;
@@ -141,7 +141,7 @@ class MultiChord : public Plugin
             {
                 // Velocity map
                 sName = String("Velocity ") + m_saNoteNames[nChord] + String(nNote + 1);
-                parameter.hints = kParameterIsAutomable;
+                parameter.hints = kParameterIsAutomatable;
                 parameter.ranges.min = 0.5f;
                 parameter.ranges.max = 2.0f;
                 parameter.ranges.def = 1.0f;
