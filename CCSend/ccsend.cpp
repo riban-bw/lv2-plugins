@@ -23,7 +23,7 @@ START_NAMESPACE_DISTRHO
 class CCSend : public Plugin {
   public:
     CCSend()
-        : Plugin(NUM_CC * 3 + 3, // Quantity of parameters
+        : Plugin(NUM_CC * 3 + 4, // Quantity of parameters
                  0,              // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0               // Quantity of internal states
           ) {}
@@ -77,27 +77,35 @@ class CCSend : public Plugin {
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
             parameter.groupId    = 0;
-            parameter.name       = String("Bank");
-            parameter.symbol     = String("bank");
-        } else if (index < 3 + NUM_CC) {
+            parameter.name       = String("Bank MSB");
+            parameter.symbol     = String("bank_msb");
+        } else if (index == 3) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 127;
+            parameter.ranges.def = 0;
+            parameter.groupId    = 0;
+            parameter.name       = String("Bank LSB");
+            parameter.symbol     = String("bank_lsb");
+        } else if (index < 4 + NUM_CC) {
             parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
             parameter.groupId    = 1;
-            m_val[index - 3]     = 0;
-            parameter.name       = String("Send CC ") + String(index - 2);
-            parameter.symbol     = String("send_") + String(index - 2);
-        } else if (index < 3 + NUM_CC * 2) {
+            m_val[index - 4]     = 0;
+            parameter.name       = String("Send CC ") + String(index - 3);
+            parameter.symbol     = String("send_") + String(index - 3);
+        } else if (index < 4 + NUM_CC * 2) {
             parameter.hints          = kParameterIsInteger;
             parameter.ranges.min     = 0;
             parameter.ranges.max     = 127;
-            parameter.ranges.def     = index - NUM_CC - 3;
-            m_cc[index - NUM_CC - 3] = parameter.ranges.def;
-            parameter.name           = String("CC ") + String(index - NUM_CC - 2);
-            parameter.symbol         = String("cc_") + String(index - NUM_CC - 2);
+            parameter.ranges.def     = index - NUM_CC - 4;
+            m_cc[index - NUM_CC - 4] = parameter.ranges.def;
+            parameter.name           = String("CC ") + String(index - NUM_CC - 3);
+            parameter.symbol         = String("cc_") + String(index - NUM_CC - 3);
             parameter.groupId        = 2;
-        } else if (index < 3 + NUM_CC * 3) {
+        } else if (index < 4 + NUM_CC * 3) {
             parameter.hints                         = kParameterIsInteger;
             parameter.ranges.min                    = 0;
             parameter.ranges.max                    = 16;
@@ -112,9 +120,9 @@ class CCSend : public Plugin {
                 values[i].label = String(i);
             }
             parameter.enumValues.values      = values;
-            m_ccChan[index - 2 * NUM_CC - 3] = 0;
-            parameter.name                   = String("CC ") + String(index - 2 * NUM_CC - 2) + String(" Chan");
-            parameter.symbol                 = String("cc_") + String(index - 2 * NUM_CC - 2) + String("_chan");
+            m_ccChan[index - 2 * NUM_CC - 4] = 0;
+            parameter.name                   = String("CC ") + String(index - 2 * NUM_CC - 3) + String(" Chan");
+            parameter.symbol                 = String("cc_") + String(index - 2 * NUM_CC - 3) + String("_chan");
             parameter.groupId                = 2;
         }
     }
@@ -144,13 +152,15 @@ class CCSend : public Plugin {
         else if (index == 1)
             return m_prog;
         else if (index == 2)
-            return m_bank;
-        else if (index < 3 + NUM_CC)
-            return m_val[index - 3];
-        else if (index < 3 + NUM_CC * 2)
-            return m_cc[index - NUM_CC - 3];
-        else if (index < 3 + 2 * NUM_CC * 2)
-            return m_ccChan[index - 2 * NUM_CC - 3];
+            return m_bank_msb;
+        else if (index == 3)
+            return m_bank_lsb;
+        else if (index < 4 + NUM_CC)
+            return m_val[index - 4];
+        else if (index < 4 + NUM_CC * 2)
+            return m_cc[index - NUM_CC - 4];
+        else if (index < 4 + 2 * NUM_CC * 2)
+            return m_ccChan[index - 2 * NUM_CC - 4];
         return 0;
     }
 
@@ -173,44 +183,60 @@ class CCSend : public Plugin {
                 m_prog = value;
             }
         } else if (index == 2) {
-            // Bank select
-            if (value != m_bank && value >= 0 && value <= 127) {
+            // Bank MSB select
+            if (value != m_bank_msb && value >= 0 && value <= 127) {
+                m_bank_msb = value;
                 MidiEvent event;
                 event.frame   = 0;
                 event.size    = 3;
                 event.data[0] = 0xb0 | (m_channel - 1);
-                event.data[1] = 0;
-                event.data[2] = value;
+                event.data[1] = m_bank_lsb;
+                event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
-                m_bank        = value;
                 event.size    = 2;
                 event.data[0] = 0xc0 | (m_channel - 1);
                 event.data[1] = value;
                 writeMidiEvent(event);
             }
-        } else if (index < 3 + NUM_CC) {
+        } else if (index == 3) {
+            // Bank LSB select
+            if (value != m_bank_lsb && value >= 0 && value <= 127) {
+                m_bank_lsb = value;
+                MidiEvent event;
+                event.frame   = 0;
+                event.size    = 3;
+                event.data[0] = 0xb0 | (m_channel - 1);
+                event.data[1] = m_bank_lsb;
+                event.data[2] = m_bank_msb;
+                writeMidiEvent(event);
+                event.size    = 2;
+                event.data[0] = 0xc0 | (m_channel - 1);
+                event.data[1] = value;
+                writeMidiEvent(event);
+            }
+        } else if (index < 4 + NUM_CC) {
             // CC value
-            if (value != m_val[index - 3] && value >= 0 && value <= 127) {
+            if (value != m_val[index - 4] && value >= 0 && value <= 127) {
                 MidiEvent event;
                 event.frame = 0;
                 event.size  = 3;
                 if (m_ccChan[index - 3] == 0)
                     event.data[0] = 0xb0 | (m_channel - 1);
                 else
-                    event.data[0] = 0xb0 | (m_ccChan[index - 3] - 1);
-                event.data[1] = m_cc[index - 3];
+                    event.data[0] = 0xb0 | (m_ccChan[index - 4] - 1);
+                event.data[1] = m_cc[index - 4];
                 event.data[2] = value;
                 writeMidiEvent(event);
-                m_val[index - 3] = value;
+                m_val[index - 4] = value;
             }
-        } else if (index < 3 + 2 * NUM_CC) {
+        } else if (index < 4 + 2 * NUM_CC) {
             // CC number
-            if (value != m_cc[index - NUM_CC - 3] && value >= 0 && value <= 127)
-                m_cc[index - NUM_CC - 3] = value;
-        } else if (index < 3 + 3 * NUM_CC) {
+            if (value != m_cc[index - NUM_CC - 4] && value >= 0 && value <= 127)
+                m_cc[index - NUM_CC - 4] = value;
+        } else if (index < 4 + 3 * NUM_CC) {
             // CC MIDI channel
-            if (value != m_ccChan[index - 2 * NUM_CC - 3] && value >= 0 && value <= 16)
-                m_ccChan[index - 2 * NUM_CC - 3] = value;
+            if (value != m_ccChan[index - 2 * NUM_CC - 4] && value >= 0 && value <= 16)
+                m_ccChan[index - 2 * NUM_CC - 4] = value;
         }
     }
 
@@ -225,9 +251,10 @@ class CCSend : public Plugin {
     uint8_t m_val[NUM_CC];
     uint8_t m_cc[NUM_CC];
     uint8_t m_ccChan[NUM_CC];
-    uint8_t m_prog    = 0;
-    uint8_t m_bank    = 0;
-    uint8_t m_channel = 1;
+    uint8_t m_prog     = 0;
+    uint8_t m_bank_lsb = 0;
+    uint8_t m_bank_msb = 0;
+    uint8_t m_channel  = 1;
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CCSend)
