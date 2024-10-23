@@ -33,7 +33,7 @@ class CCSend : public Plugin {
     const char* getLabel() const override { return "CCSend"; }
 
     // Get an full description about the plugin.
-    const char* getDescription() const override { return "Plugin that sends MIDI CC commands when a control is adjusted"; }
+    const char* getDescription() const override { return "Plugin that sends MIDI CC, PC & BS commands when a control is adjusted"; }
 
     // Get the plugin author.
     const char* getMaker() const override { return "riban"; }
