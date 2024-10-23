@@ -17,14 +17,14 @@
 
 START_NAMESPACE_DISTRHO
 
-// -----------------------------------------------------------------------------------------------------------
+#define NUM_CC 8
 
 // Plugin that sends MIDI CC when a control is adjusted
 class CCSend : public Plugin
 {
 public:
     CCSend()
-        : Plugin(10, // Quantity of parameters
+        : Plugin(NUM_CC * 2 + 2, // Quantity of parameters
                  0,  // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0   // Quantity of internal states
           )
@@ -60,7 +60,7 @@ protected:
     // Inititialise controls and parameters.
     void initParameter(uint32_t index, Parameter &parameter) override
     {
-        if (index < 4)
+        if (index < NUM_CC)
         {
             String sName = String("Send CC ") + String(index + 1);
             parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
@@ -73,7 +73,7 @@ protected:
             parameter.name = sName;
             parameter.symbol = String("send_") + String(index + 1);
         }
-        else if (index == 4)
+        else if (index == NUM_CC)
         {
             parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
@@ -84,7 +84,7 @@ protected:
             parameter.name = String("Program");
             parameter.symbol = String("program");
         }
-        else if (index == 5)
+        else if (index == NUM_CC + 1)
         {
             parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
@@ -95,15 +95,15 @@ protected:
             parameter.name = String("Bank");
             parameter.symbol = String("bank");
         }
-        else if (index < 10)
+        else if (index < NUM_CC * 2 + 2)
         {
             parameter.hints = kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
-            parameter.ranges.def = index + 1;
-            m_cc[index - 4] = parameter.ranges.def;
-            parameter.name = String("CC ") + String(index - 6);
-            parameter.symbol = String("cc_") + String(index - 6);
+            parameter.ranges.def = index - NUM_CC - 1;
+            m_cc[index - NUM_CC - 2] = parameter.ranges.def;
+            parameter.name = String("CC ") + String(index - NUM_CC - 1);
+            parameter.symbol = String("cc_") + String(index - NUM_CC - 1);
             parameter.groupId = 2;
         }
     }
@@ -131,14 +131,14 @@ protected:
     // Get a value from a control or parameter
     float getParameterValue(uint32_t index) const override
     {
-        if (index < 4)
+        if (index < NUM_CC)
             return m_val[index];
-        else if (index == 4)
+        else if (index == NUM_CC)
             return m_prog;
-        else if (index == 5)
+        else if (index == NUM_CC + 1)
             return m_bank;
-        else if (index < 10)
-            return m_cc[index - 6];
+        else if (index < NUM_CC * 2 + 2)
+            return m_cc[index - NUM_CC - 2];
         return 0;
     }
 
@@ -147,7 +147,7 @@ protected:
     {
         if (value >= 0.0f && value <= 127.0f)
         {
-            if (index < 4)
+            if (index < NUM_CC)
             {
                 if (value != m_lastVal[index])
                 {
@@ -162,7 +162,7 @@ protected:
                     m_lastVal[index] = m_val[index];
                 }
             }
-            else if (index == 4)
+            else if (index == NUM_CC)
             {
                 MidiEvent event;
                 event.frame = 0;
@@ -172,7 +172,7 @@ protected:
                 writeMidiEvent(event);
                 m_prog = value;
             }
-            else if (index == 5)
+            else if (index == NUM_CC + 1)
             {
                 MidiEvent event;
                 event.frame = 0;
@@ -187,9 +187,9 @@ protected:
                 event.data[1] = value;
                 writeMidiEvent(event);
             }
-            else if (index < 10)
+            else if (index < NUM_CC * 2 + 2)
             {
-                m_cc[index - 6] = value;
+                m_cc[index - NUM_CC - 2] = value;
                 //!@todo Rename send controllers, e.g. "Send CC 101"
             }
         }
@@ -206,9 +206,9 @@ protected:
     // -------------------------------------------------------------------------------------------------------
 
 private:
-    uint8_t m_val[4];
-    uint8_t m_lastVal[4];
-    uint8_t m_cc[4];
+    uint8_t m_val[NUM_CC];
+    uint8_t m_lastVal[NUM_CC];
+    uint8_t m_cc[NUM_CC];
     uint8_t m_prog = 0;
     uint8_t m_bank = 0;
 
