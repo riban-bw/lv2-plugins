@@ -20,203 +20,220 @@ START_NAMESPACE_DISTRHO
 #define NUM_CC 8
 
 // Plugin that sends MIDI CC when a control is adjusted
-class CCSend : public Plugin
-{
-public:
+class CCSend : public Plugin {
+  public:
     CCSend()
-        : Plugin(NUM_CC * 2 + 2, // Quantity of parameters
-                 0,  // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
-                 0   // Quantity of internal states
-          )
-    {
-    }
+        : Plugin(NUM_CC * 3 + 3, // Quantity of parameters
+                 0,              // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
+                 0               // Quantity of internal states
+          ) {}
 
-protected:
+  protected:
     // Get the plugin label. Short restricted name consisting of only _, a-z, A-Z and 0-9 characters.
-    const char *getLabel() const override { return "CCSend"; }
+    const char* getLabel() const override { return "CCSend"; }
 
     // Get an full description about the plugin.
-    const char *getDescription() const override { return "Plugin that sends MIDI CC commands when a control is adjusted"; }
+    const char* getDescription() const override { return "Plugin that sends MIDI CC commands when a control is adjusted"; }
 
     // Get the plugin author.
-    const char *getMaker() const override { return "riban"; }
+    const char* getMaker() const override { return "riban"; }
 
     // Get the plugin homepage.
-    const char *getHomePage() const override { return "https://github.com/riban-bw/lv2"; }
+    const char* getHomePage() const override { return "https://github.com/riban-bw/lv2"; }
 
     // Get the plugin license name (a single line of text).
-    const char *getLicense() const override { return "ISC"; }
+    const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
     uint32_t getVersion() const override { return d_version(1, 0, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
-    int64_t getUniqueId() const override
-    {
+    int64_t getUniqueId() const override {
         int64_t nValue = ('r' << 24) | ('i' << 16) | ('b' << 8) | ('a' << 0);
         return (nValue << 32) | ('n' << 24) | 2;
     }
 
     // Inititialise controls and parameters.
-    void initParameter(uint32_t index, Parameter &parameter) override
-    {
-        if (index < NUM_CC)
-        {
-            String sName = String("Send CC ") + String(index + 1);
-            parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
+    void initParameter(uint32_t index, Parameter& parameter) override {
+        if (index == 0) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 1;
+            parameter.ranges.max = 16;
+            parameter.ranges.def = 1;
+            parameter.groupId    = 0;
+            parameter.name       = String("Channel");
+            parameter.symbol     = String("channel");
+        } else if (index == 1) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
-            parameter.groupId = 0;
-            m_val[index] = 0;
-            m_lastVal[index] = 0;
-            parameter.name = sName;
-            parameter.symbol = String("send_") + String(index + 1);
-        }
-        else if (index == NUM_CC)
-        {
-            parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.groupId    = 0;
+            parameter.name       = String("Program");
+            parameter.symbol     = String("program");
+        } else if (index == 2) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
-            parameter.groupId = 1;
-            m_prog = 0;
-            parameter.name = String("Program");
-            parameter.symbol = String("program");
-        }
-        else if (index == NUM_CC + 1)
-        {
-            parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.groupId    = 0;
+            parameter.name       = String("Bank");
+            parameter.symbol     = String("bank");
+        } else if (index < 3 + NUM_CC) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
-            parameter.groupId = 1;
-            m_bank = 0;
-            parameter.name = String("Bank");
-            parameter.symbol = String("bank");
-        }
-        else if (index < NUM_CC * 2 + 2)
-        {
-            parameter.hints = kParameterIsInteger;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 127;
-            parameter.ranges.def = index - NUM_CC - 1;
-            m_cc[index - NUM_CC - 2] = parameter.ranges.def;
-            parameter.name = String("CC ") + String(index - NUM_CC - 1);
-            parameter.symbol = String("cc_") + String(index - NUM_CC - 1);
-            parameter.groupId = 2;
+            parameter.groupId    = 1;
+            m_val[index - 3]     = 0;
+            parameter.name       = String("Send CC ") + String(index - 2);
+            parameter.symbol     = String("send_") + String(index - 2);
+        } else if (index < 3 + NUM_CC * 2) {
+            parameter.hints          = kParameterIsInteger;
+            parameter.ranges.min     = 0;
+            parameter.ranges.max     = 127;
+            parameter.ranges.def     = index - NUM_CC - 3;
+            m_cc[index - NUM_CC - 3] = parameter.ranges.def;
+            parameter.name           = String("CC ") + String(index - NUM_CC - 2);
+            parameter.symbol         = String("cc_") + String(index - NUM_CC - 2);
+            parameter.groupId        = 2;
+        } else if (index < 3 + NUM_CC * 3) {
+            parameter.hints                         = kParameterIsInteger;
+            parameter.ranges.min                    = 0;
+            parameter.ranges.max                    = 16;
+            parameter.ranges.def                    = 0;
+            parameter.enumValues.count              = 17;
+            parameter.enumValues.restrictedMode     = true;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[17];
+            values[0].value                         = 0;
+            values[0].label                         = "Global";
+            for (int i = 1; i < 17; ++i) {
+                values[i].value = i;
+                values[i].label = String(i);
+            }
+            parameter.enumValues.values      = values;
+            m_ccChan[index - 2 * NUM_CC - 3] = 0;
+            parameter.name                   = String("CC ") + String(index - 2 * NUM_CC - 2) + String(" Chan");
+            parameter.symbol                 = String("cc_") + String(index - 2 * NUM_CC - 2) + String("_chan");
+            parameter.groupId                = 2;
         }
     }
 
     // Initialise a port group.
-    void initPortGroup(uint32_t groupId, PortGroup &portGroup) override
-    {
-        switch (groupId)
-        {
+    void initPortGroup(uint32_t groupId, PortGroup& portGroup) override {
+        switch (groupId) {
         case 0:
-            portGroup.name = String("Send CC");
-            portGroup.symbol = String("send");
-            break;
-        case 1:
-            portGroup.name = String("Send Program Change");
+            portGroup.name   = String("Send Program Change");
             portGroup.symbol = String("program");
             break;
+        case 1:
+            portGroup.name   = String("Send CC");
+            portGroup.symbol = String("send");
+            break;
         case 2:
-            portGroup.name = String("Config");
+            portGroup.name   = String("Config");
             portGroup.symbol = String("config");
             break;
         }
     }
 
     // Get a value from a control or parameter
-    float getParameterValue(uint32_t index) const override
-    {
-        if (index < NUM_CC)
-            return m_val[index];
-        else if (index == NUM_CC)
+    float getParameterValue(uint32_t index) const override {
+        if (index == 0)
+            return m_channel;
+        else if (index == 1)
             return m_prog;
-        else if (index == NUM_CC + 1)
+        else if (index == 2)
             return m_bank;
-        else if (index < NUM_CC * 2 + 2)
-            return m_cc[index - NUM_CC - 2];
+        else if (index < 3 + NUM_CC)
+            return m_val[index - 3];
+        else if (index < 3 + NUM_CC * 2)
+            return m_cc[index - NUM_CC - 3];
+        else if (index < 3 + 2 * NUM_CC * 2)
+            return m_ccChan[index - 2 * NUM_CC - 3];
         return 0;
     }
 
     // Set a control or parameter value
-    void setParameterValue(uint32_t index, float value) override
-    {
-        if (value >= 0.0f && value <= 127.0f)
-        {
-            if (index < NUM_CC)
-            {
-                if (value != m_lastVal[index])
-                {
-                    MidiEvent event;
-                    event.frame = 0;
-                    event.size = 3;
-                    event.data[0] = 0xb0;
-                    event.data[1] = m_cc[index];
-                    event.data[2] = m_val[index];
-                    writeMidiEvent(event);
-                    m_val[index] = value;
-                    m_lastVal[index] = m_val[index];
-                }
+    void setParameterValue(uint32_t index, float value) override {
+        if (index == 0) {
+            // Global MIDI channel
+            if (value != m_channel && value >= 1 && value <= 16) {
+                m_channel = value;
             }
-            else if (index == NUM_CC)
-            {
+        } else if (index == 1) {
+            // Program change
+            if (value != m_prog && value >= 0 && value <= 127) {
                 MidiEvent event;
-                event.frame = 0;
-                event.size = 2;
-                event.data[0] = 0xc6;
+                event.frame   = 0;
+                event.size    = 2;
+                event.data[0] = 0xc0 | (m_channel - 1);
                 event.data[1] = value;
                 writeMidiEvent(event);
                 m_prog = value;
             }
-            else if (index == NUM_CC + 1)
-            {
+        } else if (index == 2) {
+            // Bank select
+            if (value != m_bank && value >= 0 && value <= 127) {
                 MidiEvent event;
-                event.frame = 0;
-                event.size = 3;
-                event.data[0] = 0xb0;
+                event.frame   = 0;
+                event.size    = 3;
+                event.data[0] = 0xb0 | (m_channel - 1);
                 event.data[1] = 0;
                 event.data[2] = value;
                 writeMidiEvent(event);
-                m_bank = value;
-                event.size = 2;
-                event.data[0] = 0xc6;
+                m_bank        = value;
+                event.size    = 2;
+                event.data[0] = 0xc0 | (m_channel - 1);
                 event.data[1] = value;
                 writeMidiEvent(event);
             }
-            else if (index < NUM_CC * 2 + 2)
-            {
-                m_cc[index - NUM_CC - 2] = value;
-                //!@todo Rename send controllers, e.g. "Send CC 101"
+        } else if (index < 3 + NUM_CC) {
+            // CC value
+            if (value != m_val[index - 3] && value >= 0 && value <= 127) {
+                MidiEvent event;
+                event.frame = 0;
+                event.size  = 3;
+                if (m_ccChan[index - 3] == 0)
+                    event.data[0] = 0xb0 | (m_channel - 1);
+                else
+                    event.data[0] = 0xb0 | (m_ccChan[index - 3] - 1);
+                event.data[1] = m_cc[index - 3];
+                event.data[2] = value;
+                writeMidiEvent(event);
+                m_val[index - 3] = value;
             }
+        } else if (index < 3 + 2 * NUM_CC) {
+            // CC number
+            if (value != m_cc[index - NUM_CC - 3] && value >= 0 && value <= 127)
+                m_cc[index - NUM_CC - 3] = value;
+        } else if (index < 3 + 3 * NUM_CC) {
+            // CC MIDI channel
+            if (value != m_ccChan[index - 2 * NUM_CC - 3] && value >= 0 && value <= 16)
+                m_ccChan[index - 2 * NUM_CC - 3] = value;
         }
     }
 
     // Process audio and MIDI input.
-    void run(const float **, float **, uint32_t, const MidiEvent *midiEvents, uint32_t midiEventCount) override
-    {
+    void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
         // Pass all MIDI thru
         for (uint32_t j = 0; j < midiEventCount; ++j)
             writeMidiEvent(midiEvents[j]);
     }
 
-    // -------------------------------------------------------------------------------------------------------
-
-private:
+  private:
     uint8_t m_val[NUM_CC];
-    uint8_t m_lastVal[NUM_CC];
     uint8_t m_cc[NUM_CC];
-    uint8_t m_prog = 0;
-    uint8_t m_bank = 0;
+    uint8_t m_ccChan[NUM_CC];
+    uint8_t m_prog    = 0;
+    uint8_t m_bank    = 0;
+    uint8_t m_channel = 1;
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CCSend)
 };
 
 // Plugin entry point, called by DPF to create a new plugin instance.
-Plugin *createPlugin() { return new CCSend(); }
+Plugin* createPlugin() { return new CCSend(); }
 
 END_NAMESPACE_DISTRHO
