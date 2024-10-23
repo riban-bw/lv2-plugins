@@ -111,7 +111,7 @@ protected:
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
-            parameter.groupId = 0
+            parameter.groupId = 0;
             m_val[index] = 0;
             m_lastVal[index] = 0;
             parameter.name = sName;
@@ -125,7 +125,7 @@ protected:
             m_cc[index - 4] = parameter.ranges.def;
             parameter.name = sName;
             parameter.symbol = String("cc_") + String(index - 3);
-            parameter.groupId = 1
+            parameter.groupId = 1;
         }
     }
 

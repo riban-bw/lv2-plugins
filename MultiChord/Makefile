@@ -21,14 +21,14 @@ FILES_DSP = \
 include ../Makefile.plugins.mk
 
 # --------------------------------------------------------------
-# Enable all possible plugin types
+# Enable all required types
 
-ifeq ($(LINUX),true)
-TARGETS += jack
-endif
-
+#TARGETS += jack
 TARGETS += lv2_dsp
-TARGETS += vst
+#TARGETS += vst2
+#TARGETS += vst3
+#TARGETS += clap
+#TARGETS += au
 
 all: $(TARGETS)
 

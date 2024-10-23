@@ -1,11 +1,12 @@
 Package: riban-lv2
-Version: 1.0.0
+Version: 1.1.0
 Section: sound
 Priority: optional
-Architecture: armhf
+Architecture: arm64
 Essential: no
 Installed-Size: 212
 Maintainer: Brian Walton <brian@riban.co.uk>
 Homepage: https://github.com/riban-bw/lv2
 Description: LV2 plugins provided by riban
  MultiChord - Trigger chords from single MIDI note
+ CC Send - Send MIDI CC from control input values
