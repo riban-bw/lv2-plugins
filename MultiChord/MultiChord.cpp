@@ -25,7 +25,7 @@ START_NAMESPACE_DISTRHO
 String m_saNoteNames[] = {String("C"),String("C#"),String("D"),String("D#"),String("E"),String("F"),String("F#"),String("G"),String("G#"),String("A"),String("A#"),String("B")};
 
 /**
-  Plugin that creats different chords for each note of an octave played
+  Plugin that creates different chords for each note of an octave played
  */
 class MultiChord : public Plugin
 {

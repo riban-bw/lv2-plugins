@@ -23,6 +23,7 @@ dgl:
 
 plugins: dgl
 	$(MAKE) all -C MultiChord
+	$(MAKE) all -C CCSend
 
 ifeq ($(CAN_GENERATE_TTL),true)
 gen: plugins utils/lv2_ttl_generator
@@ -43,6 +44,7 @@ clean: clean_plugin clean_dpf clean_deb
 
 clean_plugin:
 	$(MAKE) clean -C MultiChord
+	$(MAKE) clean -C CCSend
 	rm -rf bin build
 
 clean_dpf:
