@@ -25,7 +25,7 @@ class CCSend : public Plugin {
     CCSend()
         : Plugin(8, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
-                 0, // Quantity of internal states
+                 0  // Quantity of internal states
           ) {}
 
   protected:

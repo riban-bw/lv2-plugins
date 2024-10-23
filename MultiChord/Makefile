@@ -13,7 +13,7 @@ NAME = ribanMultiChord
 # Files to build
 
 FILES_DSP = \
-	MultiChord.cpp
+	multichord.cpp
 
 # --------------------------------------------------------------
 # Do some magic
