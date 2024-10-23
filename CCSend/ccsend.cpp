@@ -107,7 +107,7 @@ protected:
     {
         if (index < 4) {
             String sName = String("Send ") + String(index + 1);
-            parameter.hints = kParameterIsAutomable | kParameterIsInteger;
+            parameter.hints = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
@@ -136,8 +136,8 @@ protected:
                 portGroup.symbol = String("send");
                 break;
             case 1:
-                portGroup.name = String("Send");
-                portGroup.symbol = String("send");
+                portGroup.name = String("CC");
+                portGroup.symbol = String("cc");
                 break;
         }
     }

@@ -17,7 +17,7 @@
 #ifndef DISTRHO_PLUGIN_INFO_H_INCLUDED
 #define DISTRHO_PLUGIN_INFO_H_INCLUDED
 
-#define DISTRHO_PLUGIN_NAME  "ribanCCSend"
+#define DISTRHO_PLUGIN_NAME  "CC Send"
 #define DISTRHO_PLUGIN_URI   "urn:riban.ccsend"
 #define DISTRHO_PLUGIN_LV2_CATEGORY "lv2:MIDIPlugin"
 
