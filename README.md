@@ -32,8 +32,6 @@ make
 sudo make install
 ```
 
-Note: [DPF issue 348](https://github.com/DISTRHO/DPF/issues/348) must be fixed. My current recommendation is to change the penultimate line in `DPF/utils/generate-ttl.sh` from `cd ..` to `cd -`.
-
 DISTRHO plugin framework is built then each of the riban plugins. The plugins are placed in the `bin` directory with the LV2 versions within `bin/lv2`. By default `make install` will install the LV2 plugins in `/usr/lv2`. This behaviour may be overriden by setting environmental variable LV2_INSTALL_PREFIX.
 
 To create a Debian package (arm64 LV2 only):
