@@ -45,7 +45,7 @@ class CCSend : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
+    uint32_t getVersion() const override { return d_version(1, 0, 1); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -202,10 +202,11 @@ class CCSend : public Plugin {
                 event.frame   = 0;
                 event.size    = 3;
                 event.data[0] = 0xb0 | (m_channel - 1);
-                event.data[1] = m_bank_lsb;
+                event.data[1] = 0;
                 event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
                 if (m_pc_bs) {
+                    event.frame   = 1;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
                     event.data[1] = value;
@@ -220,10 +221,11 @@ class CCSend : public Plugin {
                 event.frame   = 0;
                 event.size    = 3;
                 event.data[0] = 0xb0 | (m_channel - 1);
-                event.data[1] = m_bank_lsb;
-                event.data[2] = m_bank_msb;
+                event.data[1] = 32;
+                event.data[2] = m_bank_lsb;
                 writeMidiEvent(event);
                 if (m_pc_bs) {
+                    event.frame   = 1;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
                     event.data[1] = value;
