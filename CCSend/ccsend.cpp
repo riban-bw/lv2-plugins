@@ -26,6 +26,137 @@ enum BANK_MODES {
     BS_SEND_ALL    = 3  // Send BS LSB and MSB followed by PC
 };
 
+static const char* CC_NAMES[] = {
+    "Bank Select",
+    "Modulation",
+    "Breath",
+    "",
+    "Foot",
+    "Portamento Time",
+    "Data MSB",
+    "Volume",
+    "Balance",
+    "",
+    "Pan",
+    "Expression",
+    "Effect 1",
+    "Effect 2",
+    "",
+    "",
+    "General Purpose 1",
+    "General Purpose 2",
+    "General Purpose 3",
+    "General Purpose 4",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Bank Select LSB",
+    "Modulation LSB",
+    "Breath LSB",
+    "",
+    "Foot LSB",
+    "Portamento Time LSB",
+    "Data LSB",
+    "Volume LSB",
+    "Balance LSB",
+    "",
+    "Pan LSB",
+    "Expression LSB",
+    "Effect 1 LSB",
+    "Effect 2 LSB",
+    "",
+    "",
+    "General Purpose 1 LSB",
+    "General Purpose 2 LSB",
+    "General Purpose 3 LSB",
+    "General Purpose 4 LSB",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Damper Pedal",
+    "Portamento Enable",
+    "Sostenuto",
+    "Soft Pedal",
+    "Legato",
+    "Hold 2",
+    "Sound 1",
+    "Sound 2",
+    "Sound 3",
+    "Sound 4",
+    "Sound 5",
+    "Sound 6",
+    "Sound 7",
+    "Sound 8",
+    "Sound 9",
+    "Sound 10",
+    "General Purpose 5",
+    "General Purpose 6",
+    "General Purpose 7",
+    "General Purpose 8",
+    "Portamento Amount",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "Effect 1 Depth",
+    "Effect 2 Depth",
+    "Effect 3 Depth",
+    "Effect 4 Depth",
+    "Effect 5 Depth",
+    "Data Inc",
+    "Data Dec",
+    "NRPN LSB",
+    "NRPN MSB",
+    "RPN LSB",
+    "RPN MSB",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "All Sound Off",
+    "Reset",
+    "Local",
+    "All Notes Off",
+    "Omni Off",
+    "Omni On",
+    "Mono",
+    "Poly"
+};
+
 // Plugin that sends MIDI CC when a control is adjusted
 class CCSend : public Plugin {
   public:
@@ -52,7 +183,7 @@ class CCSend : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 2); }
+    uint32_t getVersion() const override { return d_version(1, 0, 3); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -106,9 +237,17 @@ class CCSend : public Plugin {
             parameter.symbol     = String("send_") + String(char('a' + index - 4));
         } else if (index < 4 + NUM_CC * 2) {
             parameter.hints          = kParameterIsInteger;
+            parameter.enumValues.count              = sizeof(CC_NAMES) / sizeof(char*);
+            parameter.enumValues.restrictedMode     = true;
             parameter.ranges.min     = 0;
-            parameter.ranges.max     = 127;
-            parameter.ranges.def     = index - NUM_CC - 4;
+            parameter.ranges.max     = parameter.enumValues.count - 1;
+            parameter.ranges.def     = index - NUM_CC - 3;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[parameter.enumValues.count];
+            for (long unsigned int i = 0; i < parameter.enumValues.count; ++i) {
+                values[i].value = i;
+                values[i].label = String(i) + " " + CC_NAMES[i];
+            }
+            parameter.enumValues.values      = values;
             m_cc[index - NUM_CC - 4] = parameter.ranges.def;
             parameter.name           = String(char('A' + index - NUM_CC - 4)) + " CC#";
             parameter.symbol         = String("cc_") + String(char('a' + index - NUM_CC - 4));
