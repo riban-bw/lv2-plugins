@@ -23,7 +23,7 @@ START_NAMESPACE_DISTRHO
 class CCSend : public Plugin {
   public:
     CCSend()
-        : Plugin(NUM_CC * 3 + 4, // Quantity of parameters
+        : Plugin(NUM_CC * 3 + 5, // Quantity of parameters
                  0,              // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0               // Quantity of internal states
           ) {}
@@ -65,6 +65,7 @@ class CCSend : public Plugin {
             parameter.symbol     = String("channel");
         } else if (index == 1) {
             parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 0;
             parameter.ranges.max = 127;
             parameter.ranges.def = 0;
@@ -94,16 +95,16 @@ class CCSend : public Plugin {
             parameter.ranges.def = 0;
             parameter.groupId    = 1;
             m_val[index - 4]     = 0;
-            parameter.name       = String("Send CC ") + String(index - 3);
-            parameter.symbol     = String("send_") + String(index - 3);
+            parameter.name       = String("Ctrl ") + String(char('A' + index - 4));
+            parameter.symbol     = String("send_") + String(char('a' + index - 4));
         } else if (index < 4 + NUM_CC * 2) {
             parameter.hints          = kParameterIsInteger;
             parameter.ranges.min     = 0;
             parameter.ranges.max     = 127;
             parameter.ranges.def     = index - NUM_CC - 4;
             m_cc[index - NUM_CC - 4] = parameter.ranges.def;
-            parameter.name           = String("CC ") + String(index - NUM_CC - 3);
-            parameter.symbol         = String("cc_") + String(index - NUM_CC - 3);
+            parameter.name           = String(char('A' + index - NUM_CC - 4)) + " CC#";
+            parameter.symbol         = String("cc_") + String(char('a' + index - NUM_CC - 4));
             parameter.groupId        = 2;
         } else if (index < 4 + NUM_CC * 3) {
             parameter.hints                         = kParameterIsInteger;
@@ -121,9 +122,18 @@ class CCSend : public Plugin {
             }
             parameter.enumValues.values      = values;
             m_ccChan[index - 2 * NUM_CC - 4] = 0;
-            parameter.name                   = String("CC ") + String(index - 2 * NUM_CC - 3) + String(" Chan");
-            parameter.symbol                 = String("cc_") + String(index - 2 * NUM_CC - 3) + String("_chan");
+            parameter.name                   = String(char('A' + index - 2 * NUM_CC - 4)) + " Chan";
+            parameter.symbol                 = String("cc_") + String(char('a' + index - 2 * NUM_CC - 4)) + "_chan";
             parameter.groupId                = 2;
+        } else if (index == 4 + NUM_CC * 3) {
+            parameter.hints      = kParameterIsBoolean;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 1;
+            parameter.ranges.def = 1;
+            m_pc_bs              = 1;
+            parameter.name       = "BS + PC";
+            parameter.symbol     = "bs_pc";
+            parameter.groupId    = 2;
         }
     }
 
@@ -131,11 +141,11 @@ class CCSend : public Plugin {
     void initPortGroup(uint32_t groupId, PortGroup& portGroup) override {
         switch (groupId) {
         case 0:
-            portGroup.name   = String("Send Program Change");
+            portGroup.name   = String("Program Change");
             portGroup.symbol = String("program");
             break;
         case 1:
-            portGroup.name   = String("Send CC");
+            portGroup.name   = String("CC");
             portGroup.symbol = String("send");
             break;
         case 2:
@@ -161,6 +171,8 @@ class CCSend : public Plugin {
             return m_cc[index - NUM_CC - 4];
         else if (index < 4 + 2 * NUM_CC * 2)
             return m_ccChan[index - 2 * NUM_CC - 4];
+        else if (index == 4 + 3 * NUM_CC)
+            return m_pc_bs;
         return 0;
     }
 
@@ -193,10 +205,12 @@ class CCSend : public Plugin {
                 event.data[1] = m_bank_lsb;
                 event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
-                event.size    = 2;
-                event.data[0] = 0xc0 | (m_channel - 1);
-                event.data[1] = value;
-                writeMidiEvent(event);
+                if (m_pc_bs) {
+                    event.size    = 2;
+                    event.data[0] = 0xc0 | (m_channel - 1);
+                    event.data[1] = value;
+                    writeMidiEvent(event);
+                }
             }
         } else if (index == 3) {
             // Bank LSB select
@@ -209,10 +223,12 @@ class CCSend : public Plugin {
                 event.data[1] = m_bank_lsb;
                 event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
-                event.size    = 2;
-                event.data[0] = 0xc0 | (m_channel - 1);
-                event.data[1] = value;
-                writeMidiEvent(event);
+                if (m_pc_bs) {
+                    event.size    = 2;
+                    event.data[0] = 0xc0 | (m_channel - 1);
+                    event.data[1] = value;
+                    writeMidiEvent(event);
+                }
             }
         } else if (index < 4 + NUM_CC) {
             // CC value
@@ -237,6 +253,8 @@ class CCSend : public Plugin {
             // CC MIDI channel
             if (value != m_ccChan[index - 2 * NUM_CC - 4] && value >= 0 && value <= 16)
                 m_ccChan[index - 2 * NUM_CC - 4] = value;
+        } else if (index == 4 + 3 * NUM_CC) {
+            m_pc_bs = value ? 1 : 0;
         }
     }
 
@@ -255,6 +273,7 @@ class CCSend : public Plugin {
     uint8_t m_bank_lsb = 0;
     uint8_t m_bank_msb = 0;
     uint8_t m_channel  = 1;
+    uint8_t m_pc_bs    = 1;
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CCSend)
