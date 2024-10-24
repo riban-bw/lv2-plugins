@@ -19,6 +19,13 @@ START_NAMESPACE_DISTRHO
 
 #define NUM_CC 8
 
+enum BANK_MODES {
+    BS_SEND_BS     = 0, // Only send Bank Select LSB or MSB
+    BS_SEND_PC     = 1, // Send BS LSB or MSB followed by PC
+    BS_SEND_LSBMSB = 2, // Send BS LSB and MSB
+    BS_SEND_ALL    = 3  // Send BS LSB and MSB followed by PC
+};
+
 // Plugin that sends MIDI CC when a control is adjusted
 class CCSend : public Plugin {
   public:
@@ -45,7 +52,7 @@ class CCSend : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 1); }
+    uint32_t getVersion() const override { return d_version(1, 0, 2); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -126,14 +133,25 @@ class CCSend : public Plugin {
             parameter.symbol                 = String("cc_") + String(char('a' + index - 2 * NUM_CC - 4)) + "_chan";
             parameter.groupId                = 2;
         } else if (index == 4 + NUM_CC * 3) {
-            parameter.hints      = kParameterIsBoolean;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 1;
-            parameter.ranges.def = 1;
-            m_pc_bs              = 1;
-            parameter.name       = "BS + PC";
-            parameter.symbol     = "bs_pc";
-            parameter.groupId    = 2;
+            parameter.hints                         = kParameterIsInteger | kParameterIsAutomatable;
+            parameter.ranges.min                    = BS_SEND_BS;
+            parameter.ranges.max                    = BS_SEND_ALL;
+            parameter.ranges.def                    = m_bankMode;
+            parameter.enumValues.count              = BS_SEND_ALL + 1;
+            parameter.enumValues.restrictedMode     = true;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[BS_SEND_ALL + 1];
+            values[BS_SEND_BS].value                = BS_SEND_BS;
+            values[BS_SEND_BS].label                = "BS Only";
+            values[BS_SEND_PC].value                = BS_SEND_PC;
+            values[BS_SEND_PC].label                = "BS+PC";
+            values[BS_SEND_LSBMSB].value            = BS_SEND_LSBMSB;
+            values[BS_SEND_LSBMSB].label            = "LSB+MSB";
+            values[BS_SEND_ALL].value               = BS_SEND_ALL;
+            values[BS_SEND_ALL].label               = "LSB+MSB+PC";
+            parameter.enumValues.values             = values;
+            parameter.name                          = "Bank Mode";
+            parameter.symbol                        = "bs_mode";
+            parameter.groupId                       = 2;
         }
     }
 
@@ -172,7 +190,7 @@ class CCSend : public Plugin {
         else if (index < 4 + 2 * NUM_CC * 2)
             return m_ccChan[index - 2 * NUM_CC - 4];
         else if (index == 4 + 3 * NUM_CC)
-            return m_pc_bs;
+            return m_bankMode;
         return 0;
     }
 
@@ -205,11 +223,17 @@ class CCSend : public Plugin {
                 event.data[1] = 0;
                 event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
-                if (m_pc_bs) {
+                if (m_bankMode >= BS_SEND_LSBMSB) {
                     event.frame   = 1;
+                    event.data[1] = 32;
+                    event.data[2] = m_bank_lsb;
+                    writeMidiEvent(event);
+                }
+                if (m_bankMode & 1) {
+                    event.frame   = 2;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
-                    event.data[1] = value;
+                    event.data[1] = m_prog;
                     writeMidiEvent(event);
                 }
             }
@@ -224,11 +248,18 @@ class CCSend : public Plugin {
                 event.data[1] = 32;
                 event.data[2] = m_bank_lsb;
                 writeMidiEvent(event);
-                if (m_pc_bs) {
+                if (m_bankMode >= BS_SEND_LSBMSB) {
                     event.frame   = 1;
+                    event.data[0] = 0xb0 | (m_channel - 1);
+                    event.data[1] = 0;
+                    event.data[2] = m_bank_msb;
+                    writeMidiEvent(event);
+                }
+                if (m_bankMode & 1) {
+                    event.frame   = 2;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
-                    event.data[1] = value;
+                    event.data[1] = m_prog;
                     writeMidiEvent(event);
                 }
             }
@@ -255,8 +286,8 @@ class CCSend : public Plugin {
             // CC MIDI channel
             if (value != m_ccChan[index - 2 * NUM_CC - 4] && value >= 0 && value <= 16)
                 m_ccChan[index - 2 * NUM_CC - 4] = value;
-        } else if (index == 4 + 3 * NUM_CC) {
-            m_pc_bs = value ? 1 : 0;
+        } else if (index == 4 + 3 * NUM_CC && value >= BS_SEND_BS && value <= BS_SEND_ALL) {
+            m_bankMode = value;
         }
     }
 
@@ -275,7 +306,7 @@ class CCSend : public Plugin {
     uint8_t m_bank_lsb = 0;
     uint8_t m_bank_msb = 0;
     uint8_t m_channel  = 1;
-    uint8_t m_pc_bs    = 1;
+    uint8_t m_bankMode = BS_SEND_BS; // True to send program change after bank select
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(CCSend)
