@@ -58,6 +58,17 @@ class MultiChord : public Plugin {
     }
 
     // Inititialise controls and parameters.
+    void initPortGroup(const uint32_t groupId, PortGroup& portGroup)
+    {
+        if (groupId < 12) {
+            portGroup.name = String("Offset ") + m_saNoteNames[groupId];
+            portGroup.symbol = String("offset_") + m_saNoteNames[groupId];
+        } else if (groupId < 24) {
+            portGroup.name = String("Velocity ") + m_saNoteNames[groupId - 12];
+            portGroup.symbol = String("velocity_") + m_saNoteNames[groupId - 12];
+        }
+    }
+
     void initParameter(uint32_t index, Parameter& parameter) override {
         if (index > 24 * MAX_NOTES)
             return;
@@ -73,6 +84,7 @@ class MultiChord : public Plugin {
             parameter.ranges.def                    = 0.0f;
             parameter.enumValues.count              = 25;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = nChord;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[25];
             for (int i = -12; i < 13; ++i) {
                 String sPrefix("");
@@ -93,6 +105,7 @@ class MultiChord : public Plugin {
             parameter.ranges.max  = 2.0f;
             parameter.ranges.def  = 1.0f;
             m_fParamValues[index] = 1.0f;
+            parameter.groupId     = nChord + 12;
         }
         parameter.name   = sName;
         parameter.symbol = sName.replace('#', 's').replace(' ', '_').toLower();
