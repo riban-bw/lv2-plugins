@@ -30,6 +30,7 @@ String m_saNoteNames[] = {String("C"),  String("C#"), String("D"),  String("D#")
 
 struct chord_type chords[] = {
     {"None", {0, 255}},
+    // Common chords
     {"Major", {0, 4, 7, 255}},
     {"Minor", {0, 3, 7, 255}},
     {"Diminished", {0, 3, 6, 255}},
@@ -50,7 +51,20 @@ struct chord_type chords[] = {
     {"Eleventh", {0, 4, 7, 10, 14, 17, 255}},
     {"Minor Eleventh", {0, 3, 7, 10, 14, 17, 255}},
     {"Thirteenth", {0, 4, 7, 10, 14, 17, 21}},
-    {"Minor Thirteenth", {0, 3, 7, 10, 14, 17, 21}}
+    {"Minor Thirteenth", {0, 3, 7, 10, 14, 17, 21}},
+    // Tonally / harmonically related
+    {"C Major", {0, 4, 7, 255}},
+    {"D Minor", {2, 5, 9, 255}},
+    {"E Minor", {4, 7, 11, 255}},
+    {"F Major", {5, 9, 12, 255}},
+    {"G Major", {7, 11, 14, 255}},
+    {"A Minor", {9, 12, 16, 255}},
+    {"B Diminished", {11, 14, 17, 255}},
+    {"C Major Seventh", {0, 4, 7, 11, 255}},
+    {"D Minor Seventh", {2, 5, 9, 12, 255}},
+    {"E Minor Seventh", {4, 7, 11, 14, 255}},
+    {"F Major Seventh", {5, 9, 12, 16, 255}},
+    {"G Dominant Seventh", {7, 11, 14, 17, 255}},
 };
 
 
