@@ -20,6 +20,15 @@ Simple plugin to send MIDI CC commands when a control port is adjusted.
 
 [Documentation](https://github.com/riban-bw/lv2/tree/main/CCSend)
 
+## Chordulator
+```
+Framework: DISTRHO
+Targets: LV2 (other targets may be enabled in each Makefile but are not tested or supported)
+```
+Sends MIDI chords when a key is pressed with the right hand. The chord type is defined by which key is pressed with the left hand.
+
+[Documentation](https://github.com/riban-bw/lv2/tree/main/Chordulator)
+
 ## Installation
 
 To install riban lv2 plugins.
