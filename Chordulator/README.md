@@ -2,6 +2,8 @@
 
 A LV2 MIDI plugin to trigger chords from single MIDI notes, with chord configuration defined by other MIDI notes.
 
-The MIDI keyboard is split at middle C. Notes below the split point define the chord to be triggered. Notes above the split point define the chord root note.
+Set the split point using the last controller (Split Point). The 12 keys below the split point become the modifier keys. Keys above the split point produce MIDI note on/off, i.e. create sound.
 
-There are 12 keys below the split point that define which chord type is played when any key above the split point is pressed. The lowest pressed chord specifier key is used. Each chord type key has a parameter to allow the chord type to be selected. There is a parameter to select the split point (default is middle C, MIDI note 60).
+Hold down one of the 12 modifier keys with the left hand. Play individual notes with the right hand to hear the corresponding chord.
+
+Adjust the 12 chord parameters to select which chord type will be triggered when each modifier key is pressed.
