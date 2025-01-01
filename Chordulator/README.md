@@ -8,5 +8,7 @@ Keys from C3 (MIDI note 48, C below middle C) define what type of chord is playe
 
 Key | MIDI Note | Chord type 
 --- | --------- | ----------
-C3  | 48 | Major
-C#3 | 49 | Minor
+C3  | 48 | Single note (no chord)
+C#3 | 48 | Major triad
+D3  | 50 | Minor triad
+D#3 | 51 | Mystical chord
