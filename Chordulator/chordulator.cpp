@@ -16,24 +16,43 @@
 #include "DistrhoPlugin.hpp"
 
 START_NAMESPACE_DISTRHO
+
 #define MAX_CHORD_NOTES 6
+
+struct chord_type {
+    const char* name;
+    uint8_t notes[MAX_CHORD_NOTES];
+};
+
 // Some constants
-uint8_t chordBase = 48; // MIDI note number of start of left hand keys
-uint8_t splitPoint = 60; // MIDI note number of start of right hand keys
-uint8_t chords[][MAX_CHORD_NOTES] = {
-        {0, 255}, // Single note (no chord selected)
-        {0, 4, 7}, // Major triad
-        {0, 3, 7}, // Minor triad
-        {0, 6, 4, 9, 2} // Mystical chord
-    };
-uint8_t numChords = sizeof(chords)/ MAX_CHORD_NOTES;
+String m_saNoteNames[] = {String("C"),  String("C#"), String("D"),  String("D#"), String("E"),  String("F"),
+                          String("F#"), String("G"),  String("G#"), String("A"),  String("A#"), String("B")};
+
+struct chord_type chords[] = {
+    {"No chord", {0, 255}},
+    {"Major", {0, 4, 7, 255}},
+    {"Minor", {0, 3, 7, 255}},
+    {"Aug", {0, 4, 8, 255}},
+    {"Aug 11th", {0, 4, 7, 11, 14, 18}},
+    {"Aug maj 7", {0, 4, 8, 12, 255}},
+    {"Aug 7", {0, 4, 8, 11, 255}},
+    {"Aug 5", {0, 4, 11, 255}},
+    {"Dim", {0, 3, 6, 255}},
+    {"Dim maj 7", {0, 3, 6, 12, 255}},
+    {"Dim 7", {0, 3, 6, 9, 255}},
+    {"Dom", {0, 4, 7, 255}},
+    {"Dom 11", {0, 4, 7, 11, 14, 17}},
+    {"Mystic", {0, 6, 11, 16, 21, 26}}
+};
+
+uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 uint8_t heldNotes[128]; // Index of chord type pressed for each note indexed by MIDI note number. 1 if pressed or zero if not pressed (released)
 
 // Plugin that creates different chords for each note of an octave played
 class Chordulator : public Plugin {
   public:
     Chordulator()
-        : Plugin(0, // Quantity of parameters
+        : Plugin(12, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0  // Quantity of internal states
           ) {
@@ -66,29 +85,66 @@ class Chordulator : public Plugin {
         return (nValue << 32) | ('n' << 24) | 2;
     }
 
+    void initParameter(uint32_t index, Parameter& parameter) override {
+        if (index > 11)
+            return;
+        String sName;
+        parameter.name                          = m_saNoteNames[index] + String(" chord ");
+        parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
+        parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+        parameter.ranges.min                    = 1;
+        parameter.ranges.max                    = numChords - 1;
+        parameter.ranges.def                    = index + 1;
+        parameter.enumValues.count              = numChords - 1;
+        parameter.enumValues.restrictedMode     = true;
+        ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
+        for (uint8_t i = 0; i < numChords -1; ++i) {
+            values[i].label = chords[i + 1].name;
+            values[i].value = i + 1;
+        }
+        parameter.enumValues.values = values;
+        m_selectedChord[index + 1] = index + 1;
+    }
+
+    // Get a value from a control or parameter
+    float getParameterValue(uint32_t index) const override {
+        if (index < 12)
+            return m_selectedChord[index + 1];
+        return 0.0f;
+    }
+
+    // Set a control or parameter value
+    void setParameterValue(uint32_t index, float value) override {
+        if (index < 12)
+        m_selectedChord[index + 1] = value;
+    }
+
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
         uint8_t status, note, velocity, noteOn, offset, prevChord, chordNote;
+
         for (uint32_t j = 0; j < midiEventCount; ++j) {
+            // Iterate through each MIDI message
             if (midiEvents[j].kDataSize > 2 && (midiEvents[j].data[0] & 0xE0) == 0x80) {
                 // Note on/off
                 status = midiEvents[j].data[0];
                 note = midiEvents[j].data[1];
                 velocity = midiEvents[j].data[2];
-                noteOn = ((status & 0x90) == 0x90) && (velocity > 0);
-                if (note < chordBase)
+                noteOn = ((status & 0x90) == 0x90) && (velocity > 0); // 0 if note-off
+
+                if (note < m_chordBase)
                 {
                     // Ignore low notes
-                } else if (note < splitPoint) {
+                } else if (note < m_splitPoint) {
                     // Modifier notes
-                    offset = note - chordBase;
-                    if (offset > numChords)
-                        continue;
+                    offset = note - m_chordBase;
+                    if (offset >= 12)
+                        continue; // Only 12 modifier notes
                     heldNotes[note] = noteOn;
                     m_chord = 0;
-                    for (uint8_t i = 1; i < numChords; ++i) {
-                        if (heldNotes[chordBase + i] != 0) {
-                            m_chord = i;
+                    for (uint8_t i = 0; i < 12; ++i) {
+                        if (heldNotes[m_chordBase + i] != 0) {
+                            m_chord = m_selectedChord[i + 1];
                             break;
                         }
                     }
@@ -100,7 +156,7 @@ class Chordulator : public Plugin {
                                 // Send MIDI note-off for each previously sent chord
                                 prevChord = heldNotes[note];
                                 for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                    uint8_t offset = chords[prevChord][i];
+                                    uint8_t offset = chords[prevChord].notes[i];
                                     if (offset == 255)
                                         break; // A note entry of 255 indicates end of chord
                                     chordNote = note + offset;
@@ -116,7 +172,7 @@ class Chordulator : public Plugin {
                             }
                             heldNotes[note] = m_chord;
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                offset = chords[m_chord][i];
+                                offset = chords[m_chord].notes[i];
                                     if (offset == 255)
                                         break; // A note entry of 255 indicates end of chord
                                 chordNote = note + offset;
@@ -136,7 +192,7 @@ class Chordulator : public Plugin {
                         if (prevChord < numChords) {
                             // Send MIDI note-off for each previously sent chord
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                uint8_t offset = chords[prevChord][i];
+                                uint8_t offset = chords[prevChord].notes[i];
                                 if (offset == 255)
                                     break; // A note entry of 255 indicates end of chord
                                 chordNote = note + offset;
@@ -159,6 +215,9 @@ class Chordulator : public Plugin {
 
   private:
     uint8_t m_chord = 0; // Currently selected chord
+    uint8_t m_chordBase = 36; // MIDI note number of start of left hand keys
+    uint8_t m_splitPoint = 60; // MIDI note number of start of right hand keys
+    uint8_t m_selectedChord[13]; // Index of the chord for each nodifier key. Index 0 is Default - no chord.
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Chordulator)
