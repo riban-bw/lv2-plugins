@@ -17,7 +17,7 @@
 
 START_NAMESPACE_DISTRHO
 
-#define MAX_CHORD_NOTES 6
+#define MAX_CHORD_NOTES 7
 
 struct chord_type {
     const char* name;
@@ -29,21 +29,30 @@ String m_saNoteNames[] = {String("C"),  String("C#"), String("D"),  String("D#")
                           String("F#"), String("G"),  String("G#"), String("A"),  String("A#"), String("B")};
 
 struct chord_type chords[] = {
-    {"No chord", {0, 255}},
+    {"None", {0, 255}},
     {"Major", {0, 4, 7, 255}},
     {"Minor", {0, 3, 7, 255}},
-    {"Aug", {0, 4, 8, 255}},
-    {"Aug 11th", {0, 4, 7, 11, 14, 18}},
-    {"Aug maj 7", {0, 4, 8, 12, 255}},
-    {"Aug 7", {0, 4, 8, 11, 255}},
-    {"Aug 5", {0, 4, 11, 255}},
-    {"Dim", {0, 3, 6, 255}},
-    {"Dim maj 7", {0, 3, 6, 12, 255}},
-    {"Dim 7", {0, 3, 6, 9, 255}},
-    {"Dom", {0, 4, 7, 255}},
-    {"Dom 11", {0, 4, 7, 11, 14, 17}},
-    {"Mystic", {0, 6, 11, 16, 21, 26}}
+    {"Diminished", {0, 3, 6, 255}},
+    {"Augmented", {0, 4, 8, 255}},
+    {"Major Seventh", {0, 4, 7, 11, 255}},
+    {"Minor Seventh", {0, 3, 7, 10, 255}},
+    {"Dominant Seventh", {0, 4, 7, 10, 255}},
+    {"Diminished Seventh", {0, 3, 6, 9, 255}},
+    {"Half-Diminished Seventh", {0, 3, 6, 10, 255}},
+    {"Minor Major Seventh", {0, 3, 7, 11, 255}},
+    {"Suspended Second", {0, 2, 7, 255}},
+    {"Suspended Fourth", {0, 5, 7, 255}},
+    {"Sixth", {0, 4, 7, 9, 255}},
+    {"Minor Sixth", {0, 3, 7, 9, 255}},
+    {"Ninth", {0, 4, 7, 10, 14, 255}},
+    {"Minor Ninth", {0, 3, 7, 10, 14, 255}},
+    {"Major Ninth", {0, 4, 7, 11, 14, 255}},
+    {"Eleventh", {0, 4, 7, 10, 14, 17, 255}},
+    {"Minor Eleventh", {0, 3, 7, 10, 14, 17, 255}},
+    {"Thirteenth", {0, 4, 7, 10, 14, 17, 21}},
+    {"Minor Thirteenth", {0, 3, 7, 10, 14, 17, 21}}
 };
+
 
 uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 uint8_t heldNotes[128]; // Index of chord type pressed for each note indexed by MIDI note number. 1 if pressed or zero if not pressed (released)
