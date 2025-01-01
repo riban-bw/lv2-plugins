@@ -52,7 +52,7 @@ uint8_t heldNotes[128]; // Index of chord type pressed for each note indexed by 
 class Chordulator : public Plugin {
   public:
     Chordulator()
-        : Plugin(12, // Quantity of parameters
+        : Plugin(13, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0  // Quantity of internal states
           ) {
@@ -86,10 +86,27 @@ class Chordulator : public Plugin {
     }
 
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index > 11)
+        if (index > 12)
             return;
-        String sName;
-        parameter.name                          = m_saNoteNames[index] + String(" chord ");
+        if (index == 12) {
+            parameter.name                          = "Split Point";
+            parameter.symbol                        = "split_point";
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min                    = 12;
+            parameter.ranges.max                    = 127 - 12;
+            parameter.ranges.def                    = 60;
+            parameter.enumValues.count              = 127 - 24;
+            parameter.enumValues.restrictedMode     = true;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[127 - 24];
+            for (uint8_t i = 0; i < 127 - 24; ++i) {
+                values[i].label = m_saNoteNames[i % 12] + String(i / 12 - 1);
+                values[i].value = i;
+            }
+            parameter.enumValues.values = values;
+            return;
+        }
+        String sName                            = m_saNoteNames[index] + String(" chord ");
+        parameter.name                          = sName;
         parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
         parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
         parameter.ranges.min                    = 1;
@@ -110,13 +127,17 @@ class Chordulator : public Plugin {
     float getParameterValue(uint32_t index) const override {
         if (index < 12)
             return m_selectedChord[index + 1];
+        else if (index == 12)
+            return m_splitPoint;
         return 0.0f;
     }
 
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
         if (index < 12)
-        m_selectedChord[index + 1] = value;
+            m_selectedChord[index + 1] = value;
+        else if (index == 12 && value > 11 && value < 127 - 12)
+            m_splitPoint = value;
     }
 
     // Process audio and MIDI input.
@@ -132,18 +153,17 @@ class Chordulator : public Plugin {
                 velocity = midiEvents[j].data[2];
                 noteOn = ((status & 0x90) == 0x90) && (velocity > 0); // 0 if note-off
 
-                if (note < m_chordBase)
+                if (note < m_splitPoint - 12)
                 {
                     // Ignore low notes
                 } else if (note < m_splitPoint) {
                     // Modifier notes
-                    offset = note - m_chordBase;
-                    if (offset >= 12)
+                    if (note >= m_splitPoint)
                         continue; // Only 12 modifier notes
                     heldNotes[note] = noteOn;
                     m_chord = 0;
                     for (uint8_t i = 0; i < 12; ++i) {
-                        if (heldNotes[m_chordBase + i] != 0) {
+                        if (heldNotes[m_splitPoint - 12 + i] != 0) {
                             m_chord = m_selectedChord[i + 1];
                             break;
                         }
@@ -215,7 +235,6 @@ class Chordulator : public Plugin {
 
   private:
     uint8_t m_chord = 0; // Currently selected chord
-    uint8_t m_chordBase = 36; // MIDI note number of start of left hand keys
     uint8_t m_splitPoint = 60; // MIDI note number of start of right hand keys
     uint8_t m_selectedChord[13]; // Index of the chord for each nodifier key. Index 0 is Default - no chord.
 
