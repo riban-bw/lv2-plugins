@@ -1,4 +1,4 @@
-/* riban TonalChords plugin built on DISTRHO Plugin Framework (DPF)
+/* riban TonalChord plugin built on DISTRHO Plugin Framework (DPF)
  * Copyright (C) 2025 Brian Walton <brian@riban.co.uk>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with
@@ -49,9 +49,9 @@ struct chord_type chords[] = {
 uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 
 // Plugin that creates different chords for each note of an octave played
-class TonalChords : public Plugin {
+class TonalChord : public Plugin {
   public:
-    TonalChords()
+    TonalChord()
         : Plugin(13, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0  // Quantity of internal states
@@ -78,7 +78,7 @@ class TonalChords : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(0, 1, 0); }
+    uint32_t getVersion() const override { return d_version(1, 0, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -221,10 +221,10 @@ class TonalChords : public Plugin {
     uint8_t m_heldNotes[128][MAX_CHORD_NOTES]; // Currently held notes, indexed by MIDI note number. For play keys this holds the index of chord type when the key was pressed 
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
-    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TonalChords)
+    DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TonalChord)
 };
 
 // Plugin entry point, called by DPF to create a new plugin instance.
-Plugin* createPlugin() { return new TonalChords(); }
+Plugin* createPlugin() { return new TonalChord(); }
 
 END_NAMESPACE_DISTRHO

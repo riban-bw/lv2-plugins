@@ -7,7 +7,7 @@ NAME = ribanTonalChord
 
 # Files to build
 FILES_DSP = \
-	tonalchords.cpp
+	tonalchord.cpp
 
 # DPF magic
 include ../Makefile.plugins.mk

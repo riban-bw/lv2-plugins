@@ -24,7 +24,7 @@ plugins: dgl utils/lv2_ttl_generator
 	$(MAKE) all -C MultiChord
 	$(MAKE) all -C CCSend
 	$(MAKE) all -C Chordulator
-	$(MAKE) all -C TonalChords
+	$(MAKE) all -C TonalChord
 
 # Target to build deb package containing all riban lv2 plugins
 deb: plugins
@@ -37,7 +37,7 @@ clean_plugin:
 	$(MAKE) clean -C MultiChord
 	$(MAKE) clean -C CCSend
 	$(MAKE) clean -C Chordulator
-	$(MAKE) clean -C TonalChords
+	$(MAKE) clean -C TonalChord
 	rm -rf bin build
 
 # Target to clean DPF

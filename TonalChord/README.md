@@ -1,4 +1,4 @@
-# Chordulator
+# TonalChord
 
 A LV2 MIDI plugin to trigger chords from single MIDI notes. Chords have tonal simulatiry to each other.
 

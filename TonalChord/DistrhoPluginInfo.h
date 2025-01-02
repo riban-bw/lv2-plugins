@@ -17,8 +17,8 @@
 #ifndef DISTRHO_PLUGIN_INFO_H_INCLUDED
 #define DISTRHO_PLUGIN_INFO_H_INCLUDED
 
-#define DISTRHO_PLUGIN_NAME  "TonalChords"
-#define DISTRHO_PLUGIN_URI   "urn:riban.tonalchords"
+#define DISTRHO_PLUGIN_NAME  "TonalChord"
+#define DISTRHO_PLUGIN_URI   "urn:riban.tonalchord"
 #define DISTRHO_PLUGIN_LV2_CATEGORY "lv2:MIDIPlugin"
 
 #define DISTRHO_PLUGIN_HAS_UI           0
