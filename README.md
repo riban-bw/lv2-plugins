@@ -29,6 +29,15 @@ Sends MIDI chords when a key is pressed with the right hand. The chord type is d
 
 [Documentation](https://github.com/riban-bw/lv2/tree/main/Chordulator)
 
+## TonalChords
+```
+Framework: DISTRHO
+Targets: LV2 (other targets may be enabled in each Makefile but are not tested or supported)
+```
+Sends MIDI chords when a key is pressed with the right hand. The chord type is defined by which key is pressed within each octave and are tonal harmonically related. The key of the chord is defined by which key is pressed with the left hand.
+
+[Documentation](https://github.com/riban-bw/lv2/tree/main/TonalChords)
+
 ## Installation
 
 To install riban lv2 plugins.

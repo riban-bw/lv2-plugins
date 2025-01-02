@@ -18,6 +18,7 @@
 START_NAMESPACE_DISTRHO
 
 #define MAX_CHORD_NOTES 8
+#define NUM_TONAL 12
 
 struct chord_type {
     const char* name;
@@ -74,23 +75,8 @@ struct chord_type chords[] = {
 
     // Other Variations
     {"Sixth Ninth", {0, 4, 7, 9, 14, 0xFF, 0xFF, 0xFF}},
-    {"Minor Sixth Ninth", {0, 3, 7, 9, 14, 0xFF, 0xFF, 0xFF}},
-
-    // Tonally / harmonically related - comments relate to C tonic/root
-    {"I", {0, 4, 7, 255}}, // C major
-    {"C Major Seventh", {0, 4, 7, 11, 255}}, // C major seventh
-    {"III", {4, 7, 11, 255}}, //E minor
-    {"D Minor Seventh", {2, 5, 9, 12, 255}}, // D minor seventh
-    {"V", {7, 11, 14, 255}}, // G major
-    {"VII", {11, 14, 17, 255}}, // B dimished
-    {"E Minor Seventh", {4, 7, 11, 14, 255}}, // E minor seventh
-    {"II", {2, 5, 9, 255}}, //D minor
-    {"F Major Seventh", {5, 9, 12, 16, 255}}, // F major seventh
-    {"IV", {5, 9, 12, 255}}, // F major
-    {"G Dominant Seventh", {7, 11, 14, 17, 255}}, // G dominant seventh
-    {"VI", {9, 12, 16, 255}} // A minor
+    {"Minor Sixth Ninth", {0, 3, 7, 9, 14, 0xFF, 0xFF, 0xFF}}
 };
-
 
 uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 
@@ -123,7 +109,7 @@ class Chordulator : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
+    uint32_t getVersion() const override { return d_version(0, 1, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -149,7 +135,7 @@ class Chordulator : public Plugin {
             parameter.enumValues.values = values;
         } else if (index == 13){
             parameter.name                          = "Latched";
-            parameter.symbol                        = "latched_mode";
+            parameter.symbol                        = "latched";
             parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min                    = 0;
             parameter.ranges.max                    = 1;
@@ -189,23 +175,36 @@ class Chordulator : public Plugin {
         else if (index == 12)
             return m_splitPoint;
         else if (index == 13)
-            return m_latchMode;
+            return m_latched;
         return 0.0f;
     }
 
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
-        if (index < 12)
+        //!@todo All notes off then reassert relevant (held play note) chords
+        if (index < 12) {
             m_selectedChord[index + 1] = value;
+        }
         else if (index == 12 && value > 11 && value < 127 - 12)
             m_splitPoint = value;
-        else if (index == 13)
-            m_latchMode = value ? 1:0;
+        else if (index == 13 && value < 3) {
+            if (value) {
+                m_latched = 1;
+            } else {
+                m_modifier = m_latched = 0;
+                for (uint8_t i = 0; i < 12; ++i) {
+                    if (m_heldNotes[m_splitPoint - 12 + i] != 0) {
+                        m_modifier = m_selectedChord[i + 1];
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
-        uint8_t status, note, velocity, noteOn, offset, prevChord, chordNote;
+        uint8_t status, note, velocity, noteOn, offset, prevChord, chordNote, chordIndex;
 
         for (uint32_t j = 0; j < midiEventCount; ++j) {
             // Iterate through each MIDI message
@@ -216,66 +215,64 @@ class Chordulator : public Plugin {
                 velocity = midiEvents[j].data[2];
                 noteOn = ((status & 0x90) == 0x90) && (velocity > 0); // 0 if note-off
 
-                if (note < m_splitPoint - 12)
-                {
-                    // Ignore low notes
-                    //!@todo Maybe this should reset (especially in latched mode)?
-                } else if (note < m_splitPoint) {
+                if (note < m_splitPoint) {
                     // Modifier notes
                     m_heldNotes[note] = noteOn;
-                    if (!m_latchMode)
-                        m_chord = 0;
+                    if (!m_latched || (noteOn && (note < m_splitPoint - 12)))
+                        m_modifier = 0;
                     for (uint8_t i = 0; i < 12; ++i) {
                         if (m_heldNotes[m_splitPoint - 12 + i] != 0) {
-                            m_chord = m_selectedChord[i + 1];
+                            m_modifier = m_selectedChord[i + 1];
                             break;
                         }
                     }
                 } else {
                     // Play notes
                     if (noteOn) {
-                        if (m_chord < numChords) {
-                            if (m_heldNotes[note]) {
-                                // Send MIDI note-off for each previously sent chord
-                                prevChord = m_heldNotes[note];
-                                for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                    uint8_t offset = chords[prevChord].notes[i];
-                                    if (offset == 255)
-                                        break; // A note entry of 255 indicates end of chord
-                                    chordNote = note + offset;
-                                    if (chordNote > 127)
-                                        continue;
-                                    MidiEvent chordEvent;
-                                    memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
-                                    chordEvent.data[0] &= 0x8F;
-                                    chordEvent.data[1] = chordNote;
-                                    chordEvent.data[2] = 0;
-                                    writeMidiEvent(chordEvent);
-                                }
-                            }
-                            m_heldNotes[note] = m_chord;
+                        if (m_modifier >= numChords)
+                            continue;
+                        if (m_heldNotes[note]) {
+                            // Send MIDI note-off for each previously sent chord
+                            prevChord = m_heldNotes[note];
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                offset = chords[m_chord].notes[i];
-                                    if (offset == 255)
-                                        break; // A note entry of 255 indicates end of chord
+                                uint8_t offset = chords[prevChord].notes[i];
+                                if (offset == 255)
+                                    break; // A note entry of 255 indicates end of chord
                                 chordNote = note + offset;
                                 if (chordNote > 127)
                                     continue;
                                 MidiEvent chordEvent;
                                 memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
+                                chordEvent.data[0] &= 0x8F;
                                 chordEvent.data[1] = chordNote;
-                                chordEvent.data[2] = velocity;
+                                chordEvent.data[2] = 0;
                                 writeMidiEvent(chordEvent);
                             }
+                        }
+                        chordIndex = m_modifier;
+                        m_heldNotes[note] = chordIndex;
+
+                        for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
+                            offset = chords[chordIndex].notes[i];
+                            if (offset == 255)
+                                break; // A note entry of 255 indicates end of chord
+                            chordNote = note + offset;
+                            if (chordNote > 127)
+                                continue;
+                            MidiEvent chordEvent;
+                            memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
+                            chordEvent.data[1] = chordNote;
+                            chordEvent.data[2] = velocity;
+                            writeMidiEvent(chordEvent);
                         }
                     } else {
                         // Release note - send associated MIDI note-off messages
                         prevChord = m_heldNotes[note];
-                        m_heldNotes[note] = m_chord;
+                        m_heldNotes[note] = m_modifier;
                         if (prevChord < numChords) {
                             // Send MIDI note-off for each previously sent chord
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                uint8_t offset = chords[prevChord].notes[i];
+                                offset = chords[prevChord].notes[i];
                                 if (offset == 255)
                                     break; // A note entry of 255 indicates end of chord
                                 chordNote = note + offset;
@@ -297,11 +294,12 @@ class Chordulator : public Plugin {
     }
 
   private:
-    uint8_t m_chord = 0; // Currently selected chord
-    uint8_t m_splitPoint = 60; // MIDI note number of start of right hand keys
-    uint8_t m_selectedChord[13]; // Index of the chord for each nodifier key. Index 0 is Default - no chord.
-    uint8_t m_heldNotes[128]; // Index of chord type pressed for each note indexed by MIDI note number. 1 if pressed or zero if not pressed (released)
-    uint8_t m_latchMode = 0; // 1 if releasing a modifier key does not reset mode
+    uint8_t m_modifier = 0; // Currently selected modifier value or semitone offset in tonal mode
+    uint8_t m_splitPoint = 60; // MIDI note number of start of right hand (play) keys
+    uint8_t m_selectedChord[13]; // Index of the chord for each modifier key when in chord mode. Index 0 is bypass (no chord)
+    uint8_t m_tonalChord[13]; // Index of the chord for each modifier key when in tonal mode. Index 0 is bypass (no chord)
+    uint8_t m_heldNotes[128]; // Currently held notes, indexed by MIDI note number. For modifier keys this holds 1 if pressed. For play keys this holds the index of chord type when the key was pressed 
+    uint8_t m_latched = 0; // True to latch selected chord.
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Chordulator)
