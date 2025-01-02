@@ -17,7 +17,7 @@
 
 START_NAMESPACE_DISTRHO
 
-#define MAX_CHORD_NOTES 7
+#define MAX_CHORD_NOTES 8
 
 struct chord_type {
     const char* name;
@@ -30,57 +30,80 @@ String m_saNoteNames[] = {String("C"),  String("C#"), String("D"),  String("D#")
 
 struct chord_type chords[] = {
     {"None", {0, 255}},
-    // Common chords
-    {"Major", {0, 4, 7, 255}},
-    {"Minor", {0, 3, 7, 255}},
-    {"Diminished", {0, 3, 6, 255}},
-    {"Augmented", {0, 4, 8, 255}},
-    {"Major Seventh", {0, 4, 7, 11, 255}},
-    {"Minor Seventh", {0, 3, 7, 10, 255}},
-    {"Dominant Seventh", {0, 4, 7, 10, 255}},
-    {"Diminished Seventh", {0, 3, 6, 9, 255}},
-    {"Half-Diminished Seventh", {0, 3, 6, 10, 255}},
-    {"Minor Major Seventh", {0, 3, 7, 11, 255}},
-    {"Suspended Second", {0, 2, 7, 255}},
-    {"Suspended Fourth", {0, 5, 7, 255}},
-    {"Sixth", {0, 4, 7, 9, 255}},
-    {"Minor Sixth", {0, 3, 7, 9, 255}},
-    {"Ninth", {0, 4, 7, 10, 14, 255}},
-    {"Minor Ninth", {0, 3, 7, 10, 14, 255}},
-    {"Major Ninth", {0, 4, 7, 11, 14, 255}},
-    {"Eleventh", {0, 4, 7, 10, 14, 17, 255}},
-    {"Minor Eleventh", {0, 3, 7, 10, 14, 17, 255}},
-    {"Thirteenth", {0, 4, 7, 10, 14, 17, 21}},
-    {"Minor Thirteenth", {0, 3, 7, 10, 14, 17, 21}},
-    // Tonally / harmonically related
-    {"C Major", {0, 4, 7, 255}},
-    {"D Minor", {2, 5, 9, 255}},
-    {"E Minor", {4, 7, 11, 255}},
-    {"F Major", {5, 9, 12, 255}},
-    {"G Major", {7, 11, 14, 255}},
-    {"A Minor", {9, 12, 16, 255}},
-    {"B Diminished", {11, 14, 17, 255}},
-    {"C Major Seventh", {0, 4, 7, 11, 255}},
-    {"D Minor Seventh", {2, 5, 9, 12, 255}},
-    {"E Minor Seventh", {4, 7, 11, 14, 255}},
-    {"F Major Seventh", {5, 9, 12, 16, 255}},
-    {"G Dominant Seventh", {7, 11, 14, 17, 255}},
+
+    // Common Triads
+    {"Major", {0, 4, 7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Minor", {0, 3, 7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Diminished", {0, 3, 6, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Augmented", {0, 4, 8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+
+    // Seventh Chords
+    {"Major Seventh", {0, 4, 7, 11, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Minor Seventh", {0, 3, 7, 10, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Dominant Seventh", {0, 4, 7, 10, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Diminished Seventh", {0, 3, 6, 9, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Half-Diminished Seventh", {0, 3, 6, 10, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Minor Major Seventh", {0, 3, 7, 11, 0xFF, 0xFF, 0xFF, 0xFF}},
+
+    // Extended Chords
+    {"Ninth", {0, 4, 7, 10, 14, 0xFF, 0xFF, 0xFF}},
+    {"Major Ninth", {0, 4, 7, 11, 14, 0xFF, 0xFF, 0xFF}},
+    {"Minor Ninth", {0, 3, 7, 10, 14, 0xFF, 0xFF, 0xFF}},
+    {"Eleventh", {0, 4, 7, 10, 14, 17, 0xFF, 0xFF}},
+    {"Minor Eleventh", {0, 3, 7, 10, 14, 17, 0xFF, 0xFF}},
+    {"Thirteenth", {0, 4, 7, 10, 14, 17, 21, 0xFF}},
+    {"Minor Thirteenth", {0, 3, 7, 10, 14, 17, 21, 0xFF}},
+
+    // Suspended Chords
+    {"Suspended Second", {0, 2, 7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Suspended Fourth", {0, 5, 7, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+
+    // Altered Chords
+    {"Augmented Seventh", {0, 4, 8, 10, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Augmented Ninth", {0, 4, 7, 10, 15, 0xFF, 0xFF, 0xFF}},
+    {"Diminished Ninth", {0, 3, 6, 10, 13, 0xFF, 0xFF, 0xFF}},
+    {"Flat Ninth", {0, 4, 7, 10, 13, 0xFF, 0xFF, 0xFF}},
+    {"Sharp Ninth", {0, 4, 7, 10, 15, 0xFF, 0xFF, 0xFF}},
+    {"Flat Fifth", {0, 4, 6, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Sharp Fifth", {0, 4, 8, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}},
+
+    // Add Chords
+    {"Add Ninth", {0, 4, 7, 14, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Add Eleventh", {0, 4, 7, 17, 0xFF, 0xFF, 0xFF, 0xFF}},
+    {"Add Thirteenth", {0, 4, 7, 21, 0xFF, 0xFF, 0xFF, 0xFF}},
+
+    // Other Variations
+    {"Sixth Ninth", {0, 4, 7, 9, 14, 0xFF, 0xFF, 0xFF}},
+    {"Minor Sixth Ninth", {0, 3, 7, 9, 14, 0xFF, 0xFF, 0xFF}},
+
+    // Tonally / harmonically related - comments relate to C tonic/root
+    {"I", {0, 4, 7, 255}}, // C major
+    {"C Major Seventh", {0, 4, 7, 11, 255}}, // C major seventh
+    {"III", {4, 7, 11, 255}}, //E minor
+    {"D Minor Seventh", {2, 5, 9, 12, 255}}, // D minor seventh
+    {"V", {7, 11, 14, 255}}, // G major
+    {"VII", {11, 14, 17, 255}}, // B dimished
+    {"E Minor Seventh", {4, 7, 11, 14, 255}}, // E minor seventh
+    {"II", {2, 5, 9, 255}}, //D minor
+    {"F Major Seventh", {5, 9, 12, 16, 255}}, // F major seventh
+    {"IV", {5, 9, 12, 255}}, // F major
+    {"G Dominant Seventh", {7, 11, 14, 17, 255}}, // G dominant seventh
+    {"VI", {9, 12, 16, 255}} // A minor
 };
 
 
 uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
-uint8_t heldNotes[128]; // Index of chord type pressed for each note indexed by MIDI note number. 1 if pressed or zero if not pressed (released)
 
 // Plugin that creates different chords for each note of an octave played
 class Chordulator : public Plugin {
   public:
     Chordulator()
-        : Plugin(13, // Quantity of parameters
+        : Plugin(14, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0  // Quantity of internal states
           ) {
             for (uint8_t i = 0; i < 128; ++i)
-                heldNotes[i] = 0;
+                m_heldNotes[i] = 0;
           }
 
   protected:
@@ -109,8 +132,6 @@ class Chordulator : public Plugin {
     }
 
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index > 12)
-            return;
         if (index == 12) {
             parameter.name                          = "Split Point";
             parameter.symbol                        = "split_point";
@@ -126,24 +147,39 @@ class Chordulator : public Plugin {
                 values[i].value = i;
             }
             parameter.enumValues.values = values;
-            return;
+        } else if (index == 13){
+            parameter.name                          = "Latched";
+            parameter.symbol                        = "latched_mode";
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min                    = 0;
+            parameter.ranges.max                    = 1;
+            parameter.ranges.def                    = 0;
+            parameter.enumValues.count              = 2;
+            parameter.enumValues.restrictedMode     = true;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[2];
+            values[0].label = "off";
+            values[0].value = 0;
+            values[1].label = "on";
+            values[1].value = 1;
+            parameter.enumValues.values = values;
+        } else if (index < 12) {
+            String sName                            = m_saNoteNames[index] + String(" chord ");
+            parameter.name                          = sName;
+            parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min                    = 1;
+            parameter.ranges.max                    = numChords - 1;
+            parameter.ranges.def                    = index + 1;
+            parameter.enumValues.count              = numChords - 1;
+            parameter.enumValues.restrictedMode     = true;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
+            for (uint8_t i = 0; i < numChords -1; ++i) {
+                values[i].label = chords[i + 1].name;
+                values[i].value = i + 1;
+            }
+            parameter.enumValues.values = values;
+            m_selectedChord[index + 1] = index + 1;
         }
-        String sName                            = m_saNoteNames[index] + String(" chord ");
-        parameter.name                          = sName;
-        parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
-        parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
-        parameter.ranges.min                    = 1;
-        parameter.ranges.max                    = numChords - 1;
-        parameter.ranges.def                    = index + 1;
-        parameter.enumValues.count              = numChords - 1;
-        parameter.enumValues.restrictedMode     = true;
-        ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
-        for (uint8_t i = 0; i < numChords -1; ++i) {
-            values[i].label = chords[i + 1].name;
-            values[i].value = i + 1;
-        }
-        parameter.enumValues.values = values;
-        m_selectedChord[index + 1] = index + 1;
     }
 
     // Get a value from a control or parameter
@@ -152,6 +188,8 @@ class Chordulator : public Plugin {
             return m_selectedChord[index + 1];
         else if (index == 12)
             return m_splitPoint;
+        else if (index == 13)
+            return m_latchMode;
         return 0.0f;
     }
 
@@ -161,6 +199,8 @@ class Chordulator : public Plugin {
             m_selectedChord[index + 1] = value;
         else if (index == 12 && value > 11 && value < 127 - 12)
             m_splitPoint = value;
+        else if (index == 13)
+            m_latchMode = value ? 1:0;
     }
 
     // Process audio and MIDI input.
@@ -179,14 +219,14 @@ class Chordulator : public Plugin {
                 if (note < m_splitPoint - 12)
                 {
                     // Ignore low notes
+                    //!@todo Maybe this should reset (especially in latched mode)?
                 } else if (note < m_splitPoint) {
                     // Modifier notes
-                    if (note >= m_splitPoint)
-                        continue; // Only 12 modifier notes
-                    heldNotes[note] = noteOn;
-                    m_chord = 0;
+                    m_heldNotes[note] = noteOn;
+                    if (!m_latchMode)
+                        m_chord = 0;
                     for (uint8_t i = 0; i < 12; ++i) {
-                        if (heldNotes[m_splitPoint - 12 + i] != 0) {
+                        if (m_heldNotes[m_splitPoint - 12 + i] != 0) {
                             m_chord = m_selectedChord[i + 1];
                             break;
                         }
@@ -195,9 +235,9 @@ class Chordulator : public Plugin {
                     // Play notes
                     if (noteOn) {
                         if (m_chord < numChords) {
-                            if (heldNotes[note]) {
+                            if (m_heldNotes[note]) {
                                 // Send MIDI note-off for each previously sent chord
-                                prevChord = heldNotes[note];
+                                prevChord = m_heldNotes[note];
                                 for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
                                     uint8_t offset = chords[prevChord].notes[i];
                                     if (offset == 255)
@@ -213,7 +253,7 @@ class Chordulator : public Plugin {
                                     writeMidiEvent(chordEvent);
                                 }
                             }
-                            heldNotes[note] = m_chord;
+                            m_heldNotes[note] = m_chord;
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
                                 offset = chords[m_chord].notes[i];
                                     if (offset == 255)
@@ -230,8 +270,8 @@ class Chordulator : public Plugin {
                         }
                     } else {
                         // Release note - send associated MIDI note-off messages
-                        prevChord = heldNotes[note];
-                        heldNotes[note] = m_chord;
+                        prevChord = m_heldNotes[note];
+                        m_heldNotes[note] = m_chord;
                         if (prevChord < numChords) {
                             // Send MIDI note-off for each previously sent chord
                             for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
@@ -260,6 +300,8 @@ class Chordulator : public Plugin {
     uint8_t m_chord = 0; // Currently selected chord
     uint8_t m_splitPoint = 60; // MIDI note number of start of right hand keys
     uint8_t m_selectedChord[13]; // Index of the chord for each nodifier key. Index 0 is Default - no chord.
+    uint8_t m_heldNotes[128]; // Index of chord type pressed for each note indexed by MIDI note number. 1 if pressed or zero if not pressed (released)
+    uint8_t m_latchMode = 0; // 1 if releasing a modifier key does not reset mode
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Chordulator)
