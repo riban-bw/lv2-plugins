@@ -11,3 +11,7 @@ riban-lv2 (1.1.0) bookworm; urgency=medium
  * 1.1.1 Adds parameter groups to multichord
 
  -- riban <riban@zynthian.org> Wed, 31 Dec 2024 08:16:00
+
+ * 1.2.0 Adds chordulator and tonalchord plugins
+
+ -- riban <riban@zynthian.org> Wed, 2 Han 2025 16:29:00
