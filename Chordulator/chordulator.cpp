@@ -18,7 +18,6 @@
 START_NAMESPACE_DISTRHO
 
 #define MAX_CHORD_NOTES 8
-#define NUM_TONAL 12
 
 struct chord_type {
     const char* name;
@@ -181,7 +180,6 @@ class Chordulator : public Plugin {
 
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
-        //!@todo All notes off then reassert relevant (held play note) chords
         if (index < 12) {
             m_selectedChord[index + 1] = value;
         }
@@ -294,10 +292,9 @@ class Chordulator : public Plugin {
     }
 
   private:
-    uint8_t m_modifier = 0; // Currently selected modifier value or semitone offset in tonal mode
+    uint8_t m_modifier = 0; // Currently selected modifier value
     uint8_t m_splitPoint = 60; // MIDI note number of start of right hand (play) keys
     uint8_t m_selectedChord[13]; // Index of the chord for each modifier key when in chord mode. Index 0 is bypass (no chord)
-    uint8_t m_tonalChord[13]; // Index of the chord for each modifier key when in tonal mode. Index 0 is bypass (no chord)
     uint8_t m_heldNotes[128]; // Currently held notes, indexed by MIDI note number. For modifier keys this holds 1 if pressed. For play keys this holds the index of chord type when the key was pressed 
     uint8_t m_latched = 0; // True to latch selected chord.
 
