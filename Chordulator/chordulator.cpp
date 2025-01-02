@@ -116,6 +116,20 @@ class Chordulator : public Plugin {
         return (nValue << 32) | ('n' << 24) | 2;
     }
 
+    void initPortGroup(const uint32_t groupId, PortGroup& portGroup)
+    {
+        switch (groupId) {
+            case 0:
+                portGroup.name = String("Chord");
+                portGroup.symbol = String("chord");
+                break;
+            case 1:
+                portGroup.name = String("Config");
+                portGroup.symbol = String("config");
+                break;
+        }
+    }
+
     void initParameter(uint32_t index, Parameter& parameter) override {
         if (index == 12) {
             parameter.name                          = "Split Point";
@@ -126,6 +140,7 @@ class Chordulator : public Plugin {
             parameter.ranges.def                    = 60;
             parameter.enumValues.count              = 127 - 24;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 1;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[127 - 24];
             for (uint8_t i = 0; i < 127 - 24; ++i) {
                 values[i].label = m_saNoteNames[i % 12] + String(i / 12 - 1);
@@ -142,6 +157,7 @@ class Chordulator : public Plugin {
             parameter.enumValues.count              = 2;
             parameter.enumValues.restrictedMode     = true;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[2];
+            parameter.groupId                       = 1;
             values[0].label = "off";
             values[0].value = 0;
             values[1].label = "on";
@@ -157,6 +173,7 @@ class Chordulator : public Plugin {
             parameter.ranges.def                    = index + 1;
             parameter.enumValues.count              = numChords - 1;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 0;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
             for (uint8_t i = 0; i < numChords -1; ++i) {
                 values[i].label = chords[i + 1].name;
@@ -200,15 +217,62 @@ class Chordulator : public Plugin {
         }
     }
 
+    void sendChordOff(uint8_t note, uint8_t chan, uint32_t frame) {
+        // Send MIDI note-off for each note in chord
+        uint8_t chordNote, offset;
+        for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
+            offset = chords[m_heldNotes[note]].notes[i];
+            if (offset == 255)
+                break; // A note entry of 255 indicates end of chord
+            chordNote = note + offset;
+            if (chordNote > 127)
+                continue;
+            MidiEvent chordEvent;
+            chordEvent.data[0] = 0x80 + chan;
+            chordEvent.data[1] = chordNote;
+            chordEvent.data[2] = 0;
+            chordEvent.frame = frame;
+            chordEvent.size = 3;
+            writeMidiEvent(chordEvent);
+        }
+        m_heldNotes[note] = 0;
+    }
+
+    void sendChordOn(uint8_t note, uint8_t velocity, uint8_t chan, uint32_t frame) {
+        if (m_heldNotes[note])
+            sendChordOff(note, chan, frame);
+        if (m_modifier >= numChords)
+            return;
+        uint8_t chordIndex = m_modifier;
+        m_heldNotes[note] = chordIndex;
+        for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
+            uint8_t offset = chords[chordIndex].notes[i];
+            if (offset == 255)
+                break; // A note entry of 255 indicates end of chord
+            uint8_t chordNote = note + offset;
+            if (chordNote > 127)
+                continue;
+            MidiEvent chordEvent;
+            chordEvent.data[0] = 0x90 + chan;
+            chordEvent.data[1] = chordNote;
+            chordEvent.data[2] = velocity;
+            chordEvent.frame = frame;
+            chordEvent.size = 3;
+            writeMidiEvent(chordEvent);
+        }
+    }
+
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
-        uint8_t status, note, velocity, noteOn, offset, prevChord, chordNote, chordIndex;
+        uint8_t status, chan, note, velocity, noteOn, prevModifier;
 
         for (uint32_t j = 0; j < midiEventCount; ++j) {
             // Iterate through each MIDI message
             if (midiEvents[j].kDataSize > 2 && (midiEvents[j].data[0] & 0xE0) == 0x80) {
                 // Note on/off
+                prevModifier = m_modifier;
                 status = midiEvents[j].data[0];
+                chan = status & 0x0f;
                 note = midiEvents[j].data[1];
                 velocity = midiEvents[j].data[2];
                 noteOn = ((status & 0x90) == 0x90) && (velocity > 0); // 0 if note-off
@@ -224,66 +288,20 @@ class Chordulator : public Plugin {
                             break;
                         }
                     }
+                    if (prevModifier != m_modifier) {
+                        // Modifier changed so reassert currently held notes
+                        for (uint8_t i = m_splitPoint; i < 128; ++i) {
+                            if (m_heldNotes[i])
+                                sendChordOn(i, velocity, chan, midiEvents[j].frame);
+                        }
+                    }
                 } else {
                     // Play notes
                     if (noteOn) {
-                        if (m_modifier >= numChords)
-                            continue;
-                        if (m_heldNotes[note]) {
-                            // Send MIDI note-off for each previously sent chord
-                            prevChord = m_heldNotes[note];
-                            for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                uint8_t offset = chords[prevChord].notes[i];
-                                if (offset == 255)
-                                    break; // A note entry of 255 indicates end of chord
-                                chordNote = note + offset;
-                                if (chordNote > 127)
-                                    continue;
-                                MidiEvent chordEvent;
-                                memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
-                                chordEvent.data[0] &= 0x8F;
-                                chordEvent.data[1] = chordNote;
-                                chordEvent.data[2] = 0;
-                                writeMidiEvent(chordEvent);
-                            }
-                        }
-                        chordIndex = m_modifier;
-                        m_heldNotes[note] = chordIndex;
-
-                        for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                            offset = chords[chordIndex].notes[i];
-                            if (offset == 255)
-                                break; // A note entry of 255 indicates end of chord
-                            chordNote = note + offset;
-                            if (chordNote > 127)
-                                continue;
-                            MidiEvent chordEvent;
-                            memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
-                            chordEvent.data[1] = chordNote;
-                            chordEvent.data[2] = velocity;
-                            writeMidiEvent(chordEvent);
-                        }
+                        sendChordOn(note, velocity, chan, midiEvents[j].frame);
                     } else {
                         // Release note - send associated MIDI note-off messages
-                        prevChord = m_heldNotes[note];
-                        m_heldNotes[note] = m_modifier;
-                        if (prevChord < numChords) {
-                            // Send MIDI note-off for each previously sent chord
-                            for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
-                                offset = chords[prevChord].notes[i];
-                                if (offset == 255)
-                                    break; // A note entry of 255 indicates end of chord
-                                chordNote = note + offset;
-                                if (chordNote > 127)
-                                    continue;
-                                MidiEvent chordEvent;
-                                memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
-                                chordEvent.data[0] &= 0x8F;
-                                chordEvent.data[1] = chordNote;
-                                chordEvent.data[2] = 0;
-                                writeMidiEvent(chordEvent);
-                            }
-                        }
+                        sendChordOff(note, chan, midiEvents[j].frame);
                     }
                 }
             } else

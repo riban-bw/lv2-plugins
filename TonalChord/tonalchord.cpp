@@ -86,6 +86,20 @@ class TonalChord : public Plugin {
         return (nValue << 32) | ('n' << 24) | 3;
     }
 
+    void initPortGroup(const uint32_t groupId, PortGroup& portGroup)
+    {
+        switch (groupId) {
+            case 0:
+                portGroup.name = String("Chord");
+                portGroup.symbol = String("chord");
+                break;
+            case 1:
+                portGroup.name = String("Config");
+                portGroup.symbol = String("config");
+                break;
+        }
+    }
+
     void initParameter(uint32_t index, Parameter& parameter) override {
         if (index == 12) {
             parameter.name                          = "Split Point";
@@ -96,6 +110,7 @@ class TonalChord : public Plugin {
             parameter.ranges.def                    = 60;
             parameter.enumValues.count              = 127 - 24;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 1;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[127 - 24];
             for (uint8_t i = 0; i < 127 - 24; ++i) {
                 values[i].label = m_saNoteNames[i % 12] + String(i / 12 - 1);
@@ -112,6 +127,7 @@ class TonalChord : public Plugin {
             parameter.ranges.def                    = index + 1;
             parameter.enumValues.count              = numChords - 1;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 0;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
             for (uint8_t i = 0; i < numChords -1; ++i) {
                 values[i].label = chords[i + 1].name;
