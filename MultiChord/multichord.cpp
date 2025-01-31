@@ -81,7 +81,7 @@ class MultiChord : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 1, 0); }
+    uint32_t getVersion() const override { return d_version(1, 2, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {

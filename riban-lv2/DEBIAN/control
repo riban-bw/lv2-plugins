@@ -1,5 +1,5 @@
 Package: riban-lv2
-Version: 1.2.1
+Version: 1.2.2
 Section: sound
 Priority: optional
 Architecture: arm64
