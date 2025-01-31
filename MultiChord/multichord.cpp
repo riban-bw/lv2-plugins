@@ -17,6 +17,7 @@
 
 #define MAX_NOTES 4 // Maximum notes in a chord
 #define NUM_PRESETS sizeof(CHORDS) / MAX_NOTES // Quantity of preset chords
+#define NUM_PARAMS 24 * MAX_NOTES + 1
 
 START_NAMESPACE_DISTRHO
 
@@ -58,9 +59,9 @@ char CHORDS[][MAX_NOTES] = {
 class MultiChord : public Plugin {
   public:
     MultiChord()
-        : Plugin(24 * MAX_NOTES, // Quantity of parameters
-                 NUM_PRESETS,    // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
-                 0               // Quantity of internal states
+        : Plugin(NUM_PARAMS,  // Quantity of parameters
+                 NUM_PRESETS, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
+                 0            // Quantity of internal states
           ) {}
 
   protected:
@@ -101,7 +102,17 @@ class MultiChord : public Plugin {
     }
 
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index > 24 * MAX_NOTES)
+        if (index == m_nWet) {
+            // Implement wet/dry control
+            parameter.name                          = "Wet";
+            parameter.symbol                        = "wet";
+            parameter.hints                         = kParameterIsAutomatable;
+            parameter.ranges.min                    = 0.0f;
+            parameter.ranges.max                    = 1.0f;
+            parameter.ranges.def                    = 1.0f;
+            parameter.enumValues.restrictedMode     = true;
+            return;
+        } else if (index >= NUM_PARAMS)
             return;
         uint32_t nNote  = index % MAX_NOTES;
         uint32_t nChord = (index / MAX_NOTES) % 12;
@@ -160,14 +171,14 @@ class MultiChord : public Plugin {
 
     // Get a value from a control or parameter
     float getParameterValue(uint32_t index) const override {
-        if (index < 24 * MAX_NOTES)
+        if (index < NUM_PARAMS)
             return m_fParamValues[index];
         return 0.0f;
     }
 
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
-        if (index < 24 * MAX_NOTES)
+        if (index < NUM_PARAMS)
             m_fParamValues[index] = value;
     }
 
@@ -181,6 +192,7 @@ class MultiChord : public Plugin {
                 m_fParamValues[MAX_NOTES * 12 + i * MAX_NOTES + j] = 1.0f;
             }
         }
+        m_fParamValues[m_nWet] = 1.0f;
     }
 
     // Process audio and MIDI input.
@@ -200,9 +212,12 @@ class MultiChord : public Plugin {
                     note = midiEvents[j].data[1] + offset;
                     if (note > 127 || note < 0)
                         continue; // Transposed note is out of range
-                    velocity = m_fParamValues[nParam + 12 * MAX_NOTES] * midiEvents[j].data[2];
-                    if (velocity < 1)
-                        continue; // Don't play extremely quite notes
+                    if (i)
+                        velocity = m_fParamValues[nParam + 12 * MAX_NOTES] * midiEvents[j].data[2] * m_fParamValues[m_nWet];
+                    else
+                        velocity = m_fParamValues[nParam + 12 * MAX_NOTES] * midiEvents[j].data[2];
+                    if (velocity < 0)
+                        //continue; // Don't play extremely quite notes
                     if (velocity > 127)
                         velocity = 127;
                     MidiEvent chordEvent;
@@ -217,7 +232,8 @@ class MultiChord : public Plugin {
     }
 
   private:
-    float m_fParamValues[24 * MAX_NOTES];
+    float m_fParamValues[NUM_PARAMS];
+    uint32_t m_nWet = NUM_PARAMS - 1;
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MultiChord)
