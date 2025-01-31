@@ -27,31 +27,15 @@ Setting a note's offset to 0 will disable the chord note unless it is the first 
 
 The plugin provides some builtin presets. The presets play all notes of chord with same velocity as trigger note is played.
 
-### Single note
-No chord - only the root note is played, effectively bypassing the plugin
-### Triads
-Major triad
-Minor triad
-Diminishsed
-Augmented
-### Seventh chords
-Major 7th
-Minor 7th
-Dominant 7th
-Half diminished 7th
-Diminished 7th
-Minor-Major 7th
-Augmented Major 7th
-Augmented 7th
-### Suspended chords
-Suspended 2nd
-Suspended 4nd
-### Add chords
-7sus4
-Add9
-Minor Add9
-### Sixth chords
-Major 6th
-Minor 6th
-### Altered 7th chords
-Half-Diminished Dominant
+|Triads|7ths|Suspended|Add|6ths|Altered 7ths|
+|-|-|-|-|-|-|
+|Major triad|Major 7th|Suspended 2nd|7sus4|Major 6th|Half-Diminished Dominant
+|Minor triad|Minor 7th|Suspended 4nd|Add9|Minor 6th||
+|Diminishsed|Dominant 7th||Minor Add9|||
+|Augmented|Half diminished 7th||||
+||Diminished 7th||||
+||Minor-Major 7th||||
+||Augmented Major 7th||||
+||Augmented 7th||||
+
+There is also a preset called, "No chord" that effectively bypasses the plugin, playing just the same root note as keyed by the user.
