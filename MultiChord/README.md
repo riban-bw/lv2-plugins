@@ -22,6 +22,11 @@ Velocity 1 | Velocity of 1st note relative to trigger note | Float | 0.0 | 2.0
 Velocity 2 | Velocity of 2nd note relative to trigger note | Float | 0.0 | 2.0
 Velocity 3 | Velocity of 3rd note relative to trigger note | Float | 0.0 | 2.0
 Velocity 4 | Velocity of 4th note relative to trigger note | Float | 0.0 | 2.0
+
+There is also the following parameter that affects all notes and chords.
+
+Parameter | Description | Type | Minimum | Maximum
+--------- | ----------- | ---- | ------- | -------
 Wet | Relative velocity of chord and  root note | Float | 0 | 1
 
 Setting a note's offset to 0 will disable the chord note unless it is the first note of the chord, e.g. Offset values 0,4,7,0 will trigger a major chord triad. Triggering this chord with 'C' will result in 'C', 'E' and 'G' being played.
