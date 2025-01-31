@@ -10,8 +10,11 @@ Use the "Split Point" parameter to set the split point. The 12 keys below the sp
 
 Play chord with root/tonic of the selected modifier key. Different, tonally related chords play for each key within the octave (C..B). Keys played in higher octave ranges play at (octave separated) higher pitches.
 
+Adjust "Wet" control to adjust relative velocity of the chord to the root note. This allows the chord to be faded or bypassed.
+
 ## Parameters
 Parameter | Description | Type | Minimum | Maximum
 --------- | ----------- | ---- | ------- | -------
 [C..B] Chord | Select the chord type triggered by this key | List | N/A | N/A
 Split Point | Select the keyboard split between modifiers and play keys | Integer | 12 | 115
+Wet | Relative velocity of chord and  root note | Float | 0 | 1

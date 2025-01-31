@@ -16,9 +16,12 @@ Adjust the 12 chord parameters to select which chord type will be selected for e
 
 Enable the "Latch" parameter to latch the modifier key so there is no need to hold them whilst pressing the play (right hand) keys.
 
+Adjust "Wet" control to adjust relative velocity of the chord to the root note. This allows the chord to be faded or bypassed.
+
 ## Parameters
 Parameter | Description | Type | Minimum | Maximum
 --------- | ----------- | ---- | ------- | -------
 [C..B] Chord | Select the chord type triggered by this modifier key | List | N/A | N/A
 Split Point | Select the keyboard split between modifiers and play keys | Integer | 12 | 115
 Latched | Enable modifier key latched mode | boolean | off | on
+Wet | Relative velocity of chord and  root note | Float | 0 | 1

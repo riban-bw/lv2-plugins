@@ -6,6 +6,8 @@ Each note of the octave can be individually configured to trigger up to a four n
 
 Each note of each chord may play at a different velocity relative to the trigger note's velocity, in a range from zero velocity to twice the velocity of the trigger note. For example, if the trigger note velocity is `100` and the scale for the chord is `0.5, 2, 1, 0.5` then the resulting chord will have note velocities: `50, 127, 100, 50`. Note that velocities will be constrained to the range between 1 and 127.
 
+Adjust "Wet" control to adjust relative velocity of the chord to the root note. This allows the chord to be faded or bypassed.
+
 ## Parameters
 
 Each of the 12 notes of an octave have the following parameters
@@ -20,6 +22,7 @@ Velocity 1 | Velocity of 1st note relative to trigger note | Float | 0.0 | 2.0
 Velocity 2 | Velocity of 2nd note relative to trigger note | Float | 0.0 | 2.0
 Velocity 3 | Velocity of 3rd note relative to trigger note | Float | 0.0 | 2.0
 Velocity 4 | Velocity of 4th note relative to trigger note | Float | 0.0 | 2.0
+Wet | Relative velocity of chord and  root note | Float | 0 | 1
 
 Setting a note's offset to 0 will disable the chord note unless it is the first note of the chord, e.g. Offset values 0,4,7,0 will trigger a major chord triad. Triggering this chord with 'C' will result in 'C', 'E' and 'G' being played.
 
