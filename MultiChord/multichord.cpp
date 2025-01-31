@@ -81,7 +81,7 @@ class MultiChord : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 2, 0); }
+    uint32_t getVersion() const override { return d_version(1, 2, 1); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -98,6 +98,10 @@ class MultiChord : public Plugin {
         } else if (groupId < 24) {
             portGroup.name = String("Velocity ") + m_saNoteNames[groupId - 12];
             portGroup.symbol = String("velocity_") + m_saNoteNames[groupId - 12];
+        } else if (groupId == 24) {
+            portGroup.name = String("Config");
+            portGroup.symbol = String("vconfig");
+
         }
     }
 
@@ -111,6 +115,7 @@ class MultiChord : public Plugin {
             parameter.ranges.max                    = 1.0f;
             parameter.ranges.def                    = 1.0f;
             parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 24;
             return;
         } else if (index >= NUM_PARAMS)
             return;

@@ -52,9 +52,9 @@ uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 class TonalChord : public Plugin {
   public:
     TonalChord()
-        : Plugin(13, // Quantity of parameters
-                 0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
-                 0  // Quantity of internal states
+        : Plugin(14, // Quantity of parameters
+                 0,  // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
+                 0   // Quantity of internal states
           ) {
             for (uint8_t i = 0; i < 128; ++i)
                 for (uint8_t j = 0; j < MAX_CHORD_NOTES; ++j)
@@ -78,7 +78,7 @@ class TonalChord : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
+    uint32_t getVersion() const override { return d_version(1, 1, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -101,23 +101,7 @@ class TonalChord : public Plugin {
     }
 
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index == 12) {
-            parameter.name                          = "Split Point";
-            parameter.symbol                        = "split_point";
-            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min                    = 12;
-            parameter.ranges.max                    = 127 - 12;
-            parameter.ranges.def                    = 60;
-            parameter.enumValues.count              = 127 - 24;
-            parameter.enumValues.restrictedMode     = true;
-            parameter.groupId                       = 1;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[127 - 24];
-            for (uint8_t i = 0; i < 127 - 24; ++i) {
-                values[i].label = m_saNoteNames[i % 12] + String(i / 12 - 1);
-                values[i].value = i;
-            }
-            parameter.enumValues.values = values;
-        } else if (index < 12) {
+        if (index < 12) {
             String sName                            = m_saNoteNames[index] + String(" chord ");
             parameter.name                          = sName;
             parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
@@ -135,6 +119,30 @@ class TonalChord : public Plugin {
             }
             parameter.enumValues.values = values;
             m_tonalChord[index] = index + 1;
+        } else if (index == 12) {
+            parameter.name                          = "Split Point";
+            parameter.symbol                        = "split_point";
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min                    = 12;
+            parameter.ranges.max                    = 127 - 12;
+            parameter.ranges.def                    = 60;
+            parameter.enumValues.count              = 127 - 24;
+            parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 1;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[127 - 24];
+            for (uint8_t i = 0; i < 127 - 24; ++i) {
+                values[i].label = m_saNoteNames[i % 12] + String(i / 12 - 1);
+                values[i].value = i;
+            }
+            parameter.enumValues.values = values;
+        } else if (index == 13) {
+            parameter.name                          = "Wet";
+            parameter.symbol                        = "wet";
+            parameter.hints                         = kParameterIsAutomatable;
+            parameter.ranges.min                    = 0.0f;
+            parameter.ranges.max                    = 1.0f;
+            parameter.ranges.def                    = 1.0f;
+            parameter.groupId                       = 1;
         }
     }
 
@@ -144,6 +152,8 @@ class TonalChord : public Plugin {
             return m_tonalChord[index + 1];
         else if (index == 12)
             return m_splitPoint;
+        else if (index == 13)
+            return m_wet;
         return 0.0f;
     }
 
@@ -154,11 +164,14 @@ class TonalChord : public Plugin {
             m_tonalChord[index + 1] = value;
         else if (index == 12 && value > 11 && value < 127 - 12)
             m_splitPoint = value;
+        else if (index == 13)
+            m_wet = value;
     }
 
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
         uint8_t status, note, velocity, noteOn, offset, chordNote, chordIndex;
+        float chordVel;
 
         for (uint32_t j = 0; j < midiEventCount; ++j) {
             // Iterate through each MIDI message
@@ -167,6 +180,7 @@ class TonalChord : public Plugin {
                 status = midiEvents[j].data[0];
                 note = midiEvents[j].data[1];
                 velocity = midiEvents[j].data[2];
+                chordVel = velocity * m_wet;
                 noteOn = ((status & 0x90) == 0x90) && (velocity > 0); // 0 if note-off
 
                 if (note < m_splitPoint) {
@@ -206,7 +220,10 @@ class TonalChord : public Plugin {
                             MidiEvent chordEvent;
                             memcpy(&chordEvent, &midiEvents[j], sizeof(MidiEvent));
                             chordEvent.data[1] = chordNote;
-                            chordEvent.data[2] = velocity;
+                            if (i)
+                                chordEvent.data[2] = chordVel;
+                            else
+                                chordEvent.data[2] = velocity;
                             writeMidiEvent(chordEvent);
                         }
                     } else {
@@ -235,6 +252,7 @@ class TonalChord : public Plugin {
     uint8_t m_splitPoint = 60; // MIDI note number of start of right hand (play) keys
     uint8_t m_tonalChord[13]; // Index of the chord for each ocatave key. Index 0 is bypass (no chord)
     uint8_t m_heldNotes[128][MAX_CHORD_NOTES]; // Currently held notes, indexed by MIDI note number. For play keys this holds the index of chord type when the key was pressed 
+    float m_wet = 1.0f; // Mix of chord to root note
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(TonalChord)

@@ -83,9 +83,9 @@ uint8_t numChords = sizeof(chords)/ sizeof(struct chord_type);
 class Chordulator : public Plugin {
   public:
     Chordulator()
-        : Plugin(14, // Quantity of parameters
-                 0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
-                 0  // Quantity of internal states
+        : Plugin(15, // Quantity of parameters
+                 0,  // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
+                 0   // Quantity of internal states
           ) {
             for (uint8_t i = 0; i < 128; ++i)
                 m_heldNotes[i] = 0;
@@ -108,7 +108,7 @@ class Chordulator : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
+    uint32_t getVersion() const override { return d_version(1, 1, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -131,7 +131,25 @@ class Chordulator : public Plugin {
     }
 
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index == 12) {
+        if (index < 12) {
+            String sName                            = m_saNoteNames[index] + String(" chord ");
+            parameter.name                          = sName;
+            parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min                    = 1;
+            parameter.ranges.max                    = numChords - 1;
+            parameter.ranges.def                    = index + 1;
+            parameter.enumValues.count              = numChords - 1;
+            parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 0;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
+            for (uint8_t i = 0; i < numChords -1; ++i) {
+                values[i].label = chords[i + 1].name;
+                values[i].value = i + 1;
+            }
+            parameter.enumValues.values = values;
+            m_selectedChord[index + 1] = index + 1;
+        } else if (index == 12) {
             parameter.name                          = "Split Point";
             parameter.symbol                        = "split_point";
             parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
@@ -163,24 +181,14 @@ class Chordulator : public Plugin {
             values[1].label = "on";
             values[1].value = 1;
             parameter.enumValues.values = values;
-        } else if (index < 12) {
-            String sName                            = m_saNoteNames[index] + String(" chord ");
-            parameter.name                          = sName;
-            parameter.symbol                        = sName.replace('#', 's').replace(' ', '_').toLower();
-            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min                    = 1;
-            parameter.ranges.max                    = numChords - 1;
-            parameter.ranges.def                    = index + 1;
-            parameter.enumValues.count              = numChords - 1;
-            parameter.enumValues.restrictedMode     = true;
-            parameter.groupId                       = 0;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[numChords - 1];
-            for (uint8_t i = 0; i < numChords -1; ++i) {
-                values[i].label = chords[i + 1].name;
-                values[i].value = i + 1;
-            }
-            parameter.enumValues.values = values;
-            m_selectedChord[index + 1] = index + 1;
+        } else if (index == 14) {
+            parameter.name                          = "Wet";
+            parameter.symbol                        = "wet";
+            parameter.hints                         = kParameterIsAutomatable;
+            parameter.ranges.min                    = 0.0f;
+            parameter.ranges.max                    = 1.0f;
+            parameter.ranges.def                    = 1.0f;
+            parameter.groupId                       = 1;
         }
     }
 
@@ -192,6 +200,8 @@ class Chordulator : public Plugin {
             return m_splitPoint;
         else if (index == 13)
             return m_latched;
+        else if (index == 14)
+            return m_wet;
         return 0.0f;
     }
 
@@ -214,6 +224,8 @@ class Chordulator : public Plugin {
                     }
                 }
             }
+        } else if (index == 14) {
+            m_wet = value;
         }
     }
 
@@ -244,6 +256,7 @@ class Chordulator : public Plugin {
         if (m_modifier >= numChords)
             return;
         uint8_t chordIndex = m_modifier;
+        uint8_t chordVel = m_wet * velocity;
         m_heldNotes[note] = chordIndex;
         for (uint8_t i = 0; i < MAX_CHORD_NOTES; ++i) {
             uint8_t offset = chords[chordIndex].notes[i];
@@ -255,7 +268,10 @@ class Chordulator : public Plugin {
             MidiEvent chordEvent;
             chordEvent.data[0] = 0x90 + chan;
             chordEvent.data[1] = chordNote;
-            chordEvent.data[2] = velocity;
+            if (i)
+                chordEvent.data[2] = chordVel;
+            else
+                chordEvent.data[2] = velocity;
             chordEvent.frame = frame;
             chordEvent.size = 3;
             writeMidiEvent(chordEvent);
@@ -315,6 +331,7 @@ class Chordulator : public Plugin {
     uint8_t m_selectedChord[13]; // Index of the chord for each modifier key when in chord mode. Index 0 is bypass (no chord)
     uint8_t m_heldNotes[128]; // Currently held notes, indexed by MIDI note number. For modifier keys this holds 1 if pressed. For play keys this holds the index of chord type when the key was pressed 
     uint8_t m_latched = 0; // True to latch selected chord.
+    float m_wet = 1.0f; // Mix of chord to root note
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
     DISTRHO_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Chordulator)
