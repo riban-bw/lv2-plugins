@@ -1,5 +1,5 @@
 /* riban MultiChord plugin built on DISTRHO Plugin Framework (DPF)
- * Copyright (C) 2021-2024 Brian Walton <brian@riban.co.uk>
+ * Copyright (C) 2021-2025 Brian Walton <brian@riban.co.uk>
  *
  * Permission to use, copy, modify, and/or distribute this software for any purpose with
  * or without fee is hereby granted, provided that the above copyright notice and this
@@ -16,6 +16,7 @@
 #include "DistrhoPlugin.hpp"
 
 #define MAX_NOTES 4 // Maximum notes in a chord
+#define NUM_PRESETS sizeof(CHORDS) / MAX_NOTES // Quantity of preset chords
 
 START_NAMESPACE_DISTRHO
 
@@ -23,12 +24,42 @@ START_NAMESPACE_DISTRHO
 String m_saNoteNames[] = {String("C"),  String("C#"), String("D"),  String("D#"), String("E"),  String("F"),
                           String("F#"), String("G"),  String("G#"), String("A"),  String("A#"), String("B")};
 
+char CHORDS[][MAX_NOTES] = {
+    {0, 0, 0, 0}, // No chord
+    // Triads
+    {0, 4, 7, 0}, // Major triad
+    {0, 3, 7, 0}, // Minor triad
+    {0, 3, 6, 0}, // Diminishsed
+    {0, 4, 8, 0}, // Augmented
+    // Seventh chords
+    {0, 4, 7, 11}, // Major 7th
+    {0, 3, 7, 10}, // Minor 7th
+    {0, 4, 7, 10}, // Dominant 7th
+    {0, 3, 6, 10}, // Half diminished 7th
+    {0, 3, 6, 9}, // Diminished 7th
+    {0, 3, 7, 11}, // Minor-Major 7th
+    {0, 4, 8, 11}, // Augmented Major 7th
+    {0, 4, 8, 10}, // Augmented 7th
+    // Suspended chords
+    {0, 2, 7, 0}, // Suspended 2nd
+    {0, 5, 7, 0}, // Suspended 4nd
+    {0, 5, 7, 10}, // 7sus4
+    // Add chords
+    {0, 4, 7, 14}, // Add9
+    {0, 3, 7, 14}, // Minor Add9
+    // 6th chords
+    {0, 4, 7, 9}, // Major 6th
+    {0, 3, 7, 9}, // Minor 6th
+    // Altered 7th chords
+    {0, 4, 6, 10} // Half-Diminished Dominant
+};
+
 // Plugin that creates different chords for each note of an octave played
 class MultiChord : public Plugin {
   public:
     MultiChord()
         : Plugin(24 * MAX_NOTES, // Quantity of parameters
-                 3,              // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
+                 NUM_PRESETS,    // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0               // Quantity of internal states
           ) {}
 
@@ -49,7 +80,7 @@ class MultiChord : public Plugin {
     const char* getLicense() const override { return "ISC"; }
 
     // Get the plugin version, in hexadecimal.
-    uint32_t getVersion() const override { return d_version(1, 0, 0); }
+    uint32_t getVersion() const override { return d_version(1, 1, 0); }
 
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
@@ -79,21 +110,29 @@ class MultiChord : public Plugin {
             // Note map
             sName                                   = String("Offset ") + m_saNoteNames[nChord] + String(nNote + 1);
             parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min                    = -12.0f;
-            parameter.ranges.max                    = 12.0f;
+            parameter.ranges.min                    = -24.0f;
+            parameter.ranges.max                    = 24.0f;
             parameter.ranges.def                    = 0.0f;
-            parameter.enumValues.count              = 25;
+            parameter.enumValues.count              = 49;
             parameter.enumValues.restrictedMode     = true;
             parameter.groupId                       = nChord;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[25];
-            for (int i = -12; i < 13; ++i) {
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[49];
+            for (int i = -24; i < 25; ++i) {
                 String sPrefix("");
-                if (i < 0)
+                if (i < -23)
+                    sPrefix = "-3";
+                else if (i < -11)
+                    sPrefix = "-2";
+                else if (i < 0)
                     sPrefix = "-";
+                else if (i > 23)
+                    sPrefix = "+3";
+                else if (i > 11)
+                    sPrefix = "+2";
                 else if (i > 0)
                     sPrefix = "+";
-                values[i + 12].label = sPrefix + m_saNoteNames[(nChord + 12 + i) % 12];
-                values[i + 12].value = i;
+                values[i + 24].label = sPrefix + m_saNoteNames[(nChord + 24 + i) % 12];
+                values[i + 24].value = i;
             }
             parameter.enumValues.values = values;
             m_fParamValues[index]       = 0.0f;
@@ -101,7 +140,7 @@ class MultiChord : public Plugin {
             // Velocity map
             sName                 = String("Velocity ") + m_saNoteNames[nChord] + String(nNote + 1);
             parameter.hints       = kParameterIsAutomatable;
-            parameter.ranges.min  = 0.5f;
+            parameter.ranges.min  = 0.0f;
             parameter.ranges.max  = 2.0f;
             parameter.ranges.def  = 1.0f;
             m_fParamValues[index] = 1.0f;
@@ -113,17 +152,10 @@ class MultiChord : public Plugin {
 
     // Initialise presets.
     void initProgramName(uint32_t index, String& programName) {
-        switch (index) {
-        case 0:
-            programName = "Default";
-            break;
-        case 1:
-            programName = "Major triad";
-            break;
-        case 2:
-            programName = "Minor triad";
-            break;
-        }
+        if (index >= NUM_PRESETS)
+            return;
+        const char* names[] = {"No chord", "Major triad", "Minor triad", "Diminishsed", "Augmented", "Major 7th", "Minor 7th", "Dominant 7th", "Half diminished 7th", "Diminished 7th", "Minor-Major 7th", "Augmented Major 7th", "Augmented 7th", "Suspended 2nd", "Suspended 4nd", "7sus4", "Add9", "Minor Add9", "Major 6th", "Minor 6th", "Half-Diminished Dominant"};
+        programName = names[index];
     }
 
     // Get a value from a control or parameter
@@ -141,22 +173,13 @@ class MultiChord : public Plugin {
 
     // Load a preset (called program in DPF).
     void loadProgram(uint32_t index) {
-        switch (index) {
-        case 0: // Default
-        case 1: // Major triad
-        case 2: // Minor triad
-            for (int i = 0; i < MAX_NOTES * 12; ++i) {
-                m_fParamValues[i]                  = 0.0f;
-                m_fParamValues[i + MAX_NOTES * 12] = 1.0f;
+        if (index >= NUM_PRESETS)
+            return;
+        for (int i = 0; i < 12; ++i) {
+            for (int j = 0; j < MAX_NOTES; ++j) {
+                m_fParamValues[i * MAX_NOTES + j] = CHORDS[index][j];
+                m_fParamValues[MAX_NOTES * 12 + i * MAX_NOTES + j] = 1.0f;
             }
-            if (index == 0)
-                return;
-            for (int i = 0; i < MAX_NOTES * 12; i += MAX_NOTES) {
-                m_fParamValues[i]     = 0.0f;
-                m_fParamValues[i + 1] = (index == 1) ? 4.0f : 3.0f;
-                m_fParamValues[i + 2] = 7.0f;
-            }
-            break;
         }
     }
 

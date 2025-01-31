@@ -1,5 +1,5 @@
 Package: riban-lv2
-Version: 1.2.0
+Version: 1.2.1
 Section: sound
 Priority: optional
 Architecture: arm64
@@ -12,4 +12,3 @@ Description: LV2 plugins provided by riban
  CC Send - Send MIDI CC from control input values
  Chordulator - Trigger chords from single MIDI note based on other MIDI note
  TonalChord - Trigger chords from single MIDI note based on tonal harmony
- 
