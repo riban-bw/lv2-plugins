@@ -222,7 +222,7 @@ class MultiChord : public Plugin {
                     else
                         velocity = m_fParamValues[nParam + 12 * MAX_NOTES] * midiEvents[j].data[2];
                     if (velocity < 0)
-                        //continue; // Don't play extremely quite notes
+                        velocity = 0;
                     if (velocity > 127)
                         velocity = 127;
                     MidiEvent chordEvent;

@@ -23,3 +23,7 @@ riban-lv2 (1.1.0) bookworm; urgency=medium
 * 1.2.2 Add wet control to multichord
 
  -- riban <riban@zynthian.org> Fri, 31 Jan 2025 15:00:00
+
+* 1.2.3 Fix missing note-off in multichord
+
+ -- riban <riban@zynthian.org> Mon, 1 Mar 2025 06:25:00
