@@ -17,7 +17,11 @@
 
 START_NAMESPACE_DISTRHO
 
-#define NUM_CC 8
+#define NUM_CC 8 // Max 26
+
+#if NUM_CC > 26
+    #error "Maximum quantity of CC is 26 due to use of A-Z for naming"
+#endif
 
 enum BANK_MODES {
     BS_SEND_BS     = 0, // Only send Bank Select LSB or MSB
