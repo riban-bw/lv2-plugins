@@ -17,17 +17,30 @@
 
 START_NAMESPACE_DISTRHO
 
-#define NUM_CC 8 // Max 26
-
-#if NUM_CC > 26
-    #error "Maximum quantity of CC is 26 due to use of A-Z for naming"
-#endif
+#define NUM_CC 8 // 0..127 (0 to disable CC. 128 gives invalid default value but could be used.)
 
 enum BANK_MODES {
     BS_SEND_BS     = 0, // Only send Bank Select LSB or MSB
     BS_SEND_PC     = 1, // Send BS LSB or MSB followed by PC
     BS_SEND_LSBMSB = 2, // Send BS LSB and MSB
     BS_SEND_ALL    = 3  // Send BS LSB and MSB followed by PC
+};
+
+enum GROUP_IDS {
+    GROUP_ID_CC,
+    GROUP_ID_PROG,
+    GROUP_ID_CONFIG
+};
+
+enum PARM_IDS {
+    PARAM_ID_PROG,
+    PARAM_ID_BANK_MSB,
+    PARAM_ID_BANK_LSB,
+    PARAM_ID_CC,
+    PARAM_ID_GLOBAL_CHAN =  PARAM_ID_CC + NUM_CC,
+    PARAM_ID_CC_CHAN,
+    PARAM_ID_CC_NUM = PARAM_ID_CC_CHAN + NUM_CC,
+    PARAM_ID_BS_MODE = PARAM_ID_CC_NUM + NUM_CC
 };
 
 static const char* CC_NAMES[] = {
@@ -197,66 +210,51 @@ class CCSend : public Plugin {
 
     // Inititialise controls and parameters.
     void initParameter(uint32_t index, Parameter& parameter) override {
-        if (index == 0) {
+        if (index == PARAM_ID_PROG) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 127;
+            parameter.ranges.def = 0;
+            parameter.groupId    = GROUP_ID_PROG;
+            parameter.name       = String("Program");
+            parameter.symbol     = String("program");
+        } else if (index == PARAM_ID_BANK_MSB) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 127;
+            parameter.ranges.def = 0;
+            parameter.groupId    = GROUP_ID_PROG;
+            parameter.name       = String("Bank MSB");
+            parameter.symbol     = String("bank_msb");
+        } else if (index == PARAM_ID_BANK_LSB) {
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 127;
+            parameter.ranges.def = 0;
+            parameter.groupId    = GROUP_ID_PROG;
+            parameter.name       = String("Bank LSB");
+            parameter.symbol     = String("bank_lsb");
+        } else if (index < PARAM_ID_GLOBAL_CHAN) {
+            int idx = index - PARAM_ID_CC;
+            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.min = 0;
+            parameter.ranges.max = 127;
+            parameter.ranges.def = 0;
+            parameter.groupId    = GROUP_ID_CC;
+            m_val[idx]           = 0;
+            parameter.name       = String("Ctrl ") + String(idx + 1);
+            parameter.symbol     = String("send_") + String(idx + 1);
+        } else if (index == PARAM_ID_GLOBAL_CHAN) {
             parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.min = 1;
             parameter.ranges.max = 16;
             parameter.ranges.def = 1;
-            parameter.groupId    = 0;
-            parameter.name       = String("Channel");
+            parameter.groupId    = GROUP_ID_CONFIG;
+            parameter.name       = String("Global Channel");
             parameter.symbol     = String("channel");
-        } else if (index == 1) {
-            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 127;
-            parameter.ranges.def = 0;
-            parameter.groupId    = 0;
-            parameter.name       = String("Program");
-            parameter.symbol     = String("program");
-        } else if (index == 2) {
-            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 127;
-            parameter.ranges.def = 0;
-            parameter.groupId    = 0;
-            parameter.name       = String("Bank MSB");
-            parameter.symbol     = String("bank_msb");
-        } else if (index == 3) {
-            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 127;
-            parameter.ranges.def = 0;
-            parameter.groupId    = 0;
-            parameter.name       = String("Bank LSB");
-            parameter.symbol     = String("bank_lsb");
-        } else if (index < 4 + NUM_CC) {
-            parameter.hints      = kParameterIsAutomatable | kParameterIsInteger;
-            parameter.ranges.min = 0;
-            parameter.ranges.max = 127;
-            parameter.ranges.def = 0;
-            parameter.groupId    = 1;
-            m_val[index - 4]     = 0;
-            parameter.name       = String("Ctrl ") + String(char('A' + index - 4));
-            parameter.symbol     = String("send_") + String(char('a' + index - 4));
-        } else if (index < 4 + NUM_CC * 2) {
-            parameter.hints          = kParameterIsInteger;
-            parameter.enumValues.count              = sizeof(CC_NAMES) / sizeof(char*);
-            parameter.enumValues.restrictedMode     = true;
-            parameter.ranges.min     = 0;
-            parameter.ranges.max     = parameter.enumValues.count - 1;
-            parameter.ranges.def     = index - NUM_CC - 3;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[parameter.enumValues.count];
-            for (long unsigned int i = 0; i < parameter.enumValues.count; ++i) {
-                values[i].value = i;
-                values[i].label = String(i) + " " + CC_NAMES[i];
-            }
-            parameter.enumValues.values      = values;
-            m_cc[index - NUM_CC - 4] = parameter.ranges.def;
-            parameter.name           = String(char('A' + index - NUM_CC - 4)) + " CC#";
-            parameter.symbol         = String("cc_") + String(char('a' + index - NUM_CC - 4));
-            parameter.groupId        = 2;
-        } else if (index < 4 + NUM_CC * 3) {
+        } else if (index < PARAM_ID_CC_NUM) {
+            int idx = index - PARAM_ID_CC_CHAN;
             parameter.hints                         = kParameterIsInteger;
             parameter.ranges.min                    = 0;
             parameter.ranges.max                    = 16;
@@ -271,11 +269,29 @@ class CCSend : public Plugin {
                 values[i].label = String(i);
             }
             parameter.enumValues.values      = values;
-            m_ccChan[index - 2 * NUM_CC - 4] = 0;
-            parameter.name                   = String(char('A' + index - 2 * NUM_CC - 4)) + " Chan";
-            parameter.symbol                 = String("cc_") + String(char('a' + index - 2 * NUM_CC - 4)) + "_chan";
-            parameter.groupId                = 2;
-        } else if (index == 4 + NUM_CC * 3) {
+            m_ccChan[idx]                    = 0;
+            parameter.name                   = String(idx + 1) + " Chan";
+            parameter.symbol                 = String("cc_") + String(idx + 1) + "_chan";
+            parameter.groupId                = GROUP_ID_CONFIG;
+        } else if (index < PARAM_ID_BS_MODE) {
+            int idx                          = index - PARAM_ID_CC_NUM;
+            parameter.hints                  = kParameterIsInteger;
+            parameter.enumValues.count              = sizeof(CC_NAMES) / sizeof(char*);
+            parameter.enumValues.restrictedMode     = true;
+            parameter.ranges.min     = 0;
+            parameter.ranges.max     = parameter.enumValues.count - 1;
+            parameter.ranges.def     = idx + 1;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[parameter.enumValues.count];
+            for (long unsigned int i = 0; i < parameter.enumValues.count; ++i) {
+                values[i].value = i;
+                values[i].label = String(i) + " " + CC_NAMES[i];
+            }
+            parameter.enumValues.values      = values;
+            m_cc[idx] = parameter.ranges.def;
+            parameter.name           = String(idx + 1) + " CC#";
+            parameter.symbol         = String("cc_") + String(idx + 1);
+            parameter.groupId        = GROUP_ID_CONFIG;
+        } else if (index == PARAM_ID_BS_MODE) {
             parameter.hints                         = kParameterIsInteger | kParameterIsAutomatable;
             parameter.ranges.min                    = BS_SEND_BS;
             parameter.ranges.max                    = BS_SEND_ALL;
@@ -294,22 +310,22 @@ class CCSend : public Plugin {
             parameter.enumValues.values             = values;
             parameter.name                          = "Bank Mode";
             parameter.symbol                        = "bs_mode";
-            parameter.groupId                       = 2;
+            parameter.groupId                       = GROUP_ID_CONFIG;
         }
     }
 
     // Initialise a port group.
     void initPortGroup(uint32_t groupId, PortGroup& portGroup) override {
         switch (groupId) {
-        case 0:
+        case GROUP_ID_PROG:
             portGroup.name   = String("Program Change");
             portGroup.symbol = String("program");
             break;
-        case 1:
+        case GROUP_ID_CC:
             portGroup.name   = String("CC");
             portGroup.symbol = String("send");
             break;
-        case 2:
+        case GROUP_ID_CONFIG:
             portGroup.name   = String("Config");
             portGroup.symbol = String("config");
             break;
@@ -317,34 +333,29 @@ class CCSend : public Plugin {
     }
 
     // Get a value from a control or parameter
-    float getParameterValue(uint32_t index) const override {
-        if (index == 0)
-            return m_channel;
-        else if (index == 1)
+    float getParameterValue(uint32_t index) const override {        
+        if (index == PARAM_ID_PROG)
             return m_prog;
-        else if (index == 2)
+        else if (index == PARAM_ID_BANK_MSB)
             return m_bank_msb;
-        else if (index == 3)
+        else if (index == PARAM_ID_BANK_LSB)
             return m_bank_lsb;
-        else if (index < 4 + NUM_CC)
-            return m_val[index - 4];
-        else if (index < 4 + NUM_CC * 2)
-            return m_cc[index - NUM_CC - 4];
-        else if (index < 4 + 2 * NUM_CC * 2)
-            return m_ccChan[index - 2 * NUM_CC - 4];
-        else if (index == 4 + 3 * NUM_CC)
+        else if (index <PARAM_ID_GLOBAL_CHAN)
+            return m_val[index - PARAM_ID_CC];
+        else if (index == PARAM_ID_GLOBAL_CHAN)
+            return m_channel;
+        else if (index < PARAM_ID_CC_NUM)
+            return m_cc[index - PARAM_ID_CC_CHAN];
+        else if (index < PARAM_ID_BS_MODE)
+            return m_ccChan[index - PARAM_ID_CC_NUM];
+        else if (index == PARAM_ID_BS_MODE)
             return m_bankMode;
         return 0;
     }
 
     // Set a control or parameter value
-    void setParameterValue(uint32_t index, float value) override {
-        if (index == 0) {
-            // Global MIDI channel
-            if (value != m_channel && value >= 1 && value <= 16) {
-                m_channel = value;
-            }
-        } else if (index == 1) {
+    void setParameterValue(uint32_t index, float value) override {        
+        if (index == PARAM_ID_PROG) {
             // Program change
             if (value != m_prog && value >= 0 && value <= 127) {
                 MidiEvent event;
@@ -355,7 +366,7 @@ class CCSend : public Plugin {
                 writeMidiEvent(event);
                 m_prog = value;
             }
-        } else if (index == 2) {
+        } else if (index == PARAM_ID_BANK_MSB) {
             // Bank MSB select
             if (value != m_bank_msb && value >= 0 && value <= 127) {
                 m_bank_msb = value;
@@ -367,69 +378,78 @@ class CCSend : public Plugin {
                 event.data[2] = m_bank_msb;
                 writeMidiEvent(event);
                 if (m_bankMode >= BS_SEND_LSBMSB) {
-                    event.frame   = 1;
+                    ++event.frame;
                     event.data[1] = 32;
                     event.data[2] = m_bank_lsb;
                     writeMidiEvent(event);
                 }
                 if (m_bankMode & 1) {
-                    event.frame   = 2;
+                    ++event.frame;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
                     event.data[1] = m_prog;
                     writeMidiEvent(event);
                 }
             }
-        } else if (index == 3) {
+        } else if (index == PARAM_ID_BANK_LSB) {
             // Bank LSB select
             if (value != m_bank_lsb && value >= 0 && value <= 127) {
                 m_bank_lsb = value;
                 MidiEvent event;
                 event.frame   = 0;
                 event.size    = 3;
-                event.data[0] = 0xb0 | (m_channel - 1);
-                event.data[1] = 32;
-                event.data[2] = m_bank_lsb;
-                writeMidiEvent(event);
                 if (m_bankMode >= BS_SEND_LSBMSB) {
-                    event.frame   = 1;
                     event.data[0] = 0xb0 | (m_channel - 1);
                     event.data[1] = 0;
                     event.data[2] = m_bank_msb;
                     writeMidiEvent(event);
+                    event.frame++;
                 }
+                event.data[0] = 0xb0 | (m_channel - 1);
+                event.data[1] = 32;
+                event.data[2] = m_bank_lsb;
+                writeMidiEvent(event);
                 if (m_bankMode & 1) {
-                    event.frame   = 2;
+                    event.frame++;
                     event.size    = 2;
                     event.data[0] = 0xc0 | (m_channel - 1);
                     event.data[1] = m_prog;
                     writeMidiEvent(event);
                 }
             }
-        } else if (index < 4 + NUM_CC) {
+        } else if (index < PARAM_ID_GLOBAL_CHAN) {
             // CC value
-            if (value != m_val[index - 4] && value >= 0 && value <= 127) {
+            int idx = index - PARAM_ID_CC;
+            if (value != m_val[idx] && value >= 0 && value <= 127) {
                 MidiEvent event;
                 event.frame = 0;
                 event.size  = 3;
-                if (m_ccChan[index - 3] == 0)
+                if (m_ccChan[idx] == 0)
                     event.data[0] = 0xb0 | (m_channel - 1);
                 else
-                    event.data[0] = 0xb0 | (m_ccChan[index - 4] - 1);
-                event.data[1] = m_cc[index - 4];
+                    event.data[0] = 0xb0 | (m_ccChan[idx] - 1);
+                event.data[1] = m_cc[idx];
                 event.data[2] = value;
                 writeMidiEvent(event);
-                m_val[index - 4] = value;
+                m_val[idx] = value;
             }
-        } else if (index < 4 + 2 * NUM_CC) {
-            // CC number
-            if (value != m_cc[index - NUM_CC - 4] && value >= 0 && value <= 127)
-                m_cc[index - NUM_CC - 4] = value;
-        } else if (index < 4 + 3 * NUM_CC) {
+        } else if (index == PARAM_ID_GLOBAL_CHAN) {
+            // Global MIDI channel
+            if (value != m_channel && value >= 1 && value <= 16) {
+                m_channel = value;
+            }
+        } else if (index < PARAM_ID_CC_NUM) {
             // CC MIDI channel
-            if (value != m_ccChan[index - 2 * NUM_CC - 4] && value >= 0 && value <= 16)
-                m_ccChan[index - 2 * NUM_CC - 4] = value;
-        } else if (index == 4 + 3 * NUM_CC && value >= BS_SEND_BS && value <= BS_SEND_ALL) {
+            int idx = index - PARAM_ID_CC_CHAN;
+            if (value != m_ccChan[idx] && value >= 0 && value <= 16)
+                m_ccChan[idx] = value;
+        } else if (index < PARAM_ID_BS_MODE) {
+            // CC number
+            int idx = index - PARAM_ID_CC_NUM;
+            if (value != m_cc[idx] && value >= 0 && value <= 127) {
+                m_cc[idx] = value;
+            }
+        } else if (index == PARAM_ID_BS_MODE && value >= BS_SEND_BS && value <= BS_SEND_ALL) {
             m_bankMode = value;
         }
     }
@@ -448,7 +468,7 @@ class CCSend : public Plugin {
     uint8_t m_prog     = 0;
     uint8_t m_bank_lsb = 0;
     uint8_t m_bank_msb = 0;
-    uint8_t m_channel  = 1;
+    uint8_t m_channel  = 1; // Global MIDI channel (1..16)
     uint8_t m_bankMode = BS_SEND_BS; // True to send program change after bank select
 
     // Set our plugin class as non-copyable and add a leak detector just in case.
