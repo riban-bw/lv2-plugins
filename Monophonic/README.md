@@ -1,6 +1,6 @@
 # Monophonic
 
-A LV2 MIDI plugin that limits MIDI to monophonic. Only one MIDI note is active, based on the mode (see parameters). Per channel filtering is enabled.
+A LV2 MIDI plugin that limits MIDI to monophonic. Only one MIDI note is active, based on the mode (see parameters). Per channel filtering is enabled. Sustain or hold pedal works as expected, maintinaing the currently playing note.
 
 
 ## Parameters
