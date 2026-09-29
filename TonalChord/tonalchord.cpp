@@ -13,7 +13,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "DistrhoPlugin.hpp"
+#include "../common.h"
 
 START_NAMESPACE_DISTRHO
 
@@ -83,7 +83,7 @@ class TonalChord : public Plugin {
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
         int64_t nValue = ('r' << 24) | ('i' << 16) | ('b' << 8) | ('a' << 0);
-        return (nValue << 32) | ('n' << 24) | 3;
+        return (nValue << 32) | ('n' << 24) | ID_TONALCHORD;
     }
 
     void initPortGroup(const uint32_t groupId, PortGroup& portGroup)

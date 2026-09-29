@@ -13,7 +13,7 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "DistrhoPlugin.hpp"
+#include "../common.h"
 
 #define MAX_NOTES 4 // Maximum notes in a chord
 #define NUM_PRESETS sizeof(CHORDS) / MAX_NOTES // Quantity of preset chords
@@ -86,7 +86,7 @@ class MultiChord : public Plugin {
     // Get the plugin unique Id. Used by LADSPA, DSSI and VST plugin formats.
     int64_t getUniqueId() const override {
         int64_t nValue = ('r' << 24) | ('i' << 16) | ('b' << 8) | ('a' << 0);
-        return (nValue << 32) | ('n' << 24) | 1;
+        return (nValue << 32) | ('n' << 24) | ID_MULTICHORD;
     }
 
     // Inititialise controls and parameters.

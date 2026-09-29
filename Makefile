@@ -25,6 +25,7 @@ plugins: dgl utils/lv2_ttl_generator
 	$(MAKE) all -C CCSend
 	$(MAKE) all -C Chordulator
 	$(MAKE) all -C TonalChord
+	$(MAKE) all -C Monophonic
 
 # Target to build deb package containing all riban lv2 plugins
 deb: plugins
