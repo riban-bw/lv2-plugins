@@ -1,30 +1,24 @@
-# ai_comment: Builds the riban LV2 plugins for aarch64 (arm64) on a native GitHub
-# ai_comment: arm64 runner, inside a Debian Trixie container so the binaries link
-# ai_comment: against the same glibc as Zynthian Vangelis (Raspberry Pi OS Trixie).
+# Builds the riban LV2 plugins for aarch64 (arm64) on a native GitHub arm64 runner, inside a Debian Trixie container
 name: Build aarch64
 
 on:
   push:
     branches: [main]
-    # ai_comment: Release tags in this repo are bare versions, e.g. 1.3.1
     tags: ['[0-9]+.[0-9]+.[0-9]+*']
   pull_request:
   workflow_dispatch:
 
 permissions:
-  contents: write # ai_comment: needed to create releases and upload assets
+  contents: write
 
 jobs:
   build:
     name: Build arm64
-    # ai_comment: Native arm64 runner (free for public repositories) - no cross-compiling or QEMU.
     runs-on: ubuntu-24.04-arm
     container:
       image: debian:trixie
 
     steps:
-      # ai_comment: git must exist in the container before checkout, otherwise
-      # ai_comment: actions/checkout falls back to a tarball download without submodules.
       - name: Install build dependencies
         run: |
           apt-get update
@@ -61,7 +55,6 @@ jobs:
           file bin/lv2/*/*.so
           dpkg-deb -I bin/*.deb
 
-      # ai_comment: Every run (push, PR, manual) keeps the build as a workflow artifact.
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
@@ -71,7 +64,6 @@ jobs:
             bin/*.tar.gz
           if-no-files-found: error
 
-      # ai_comment: Pushing a version tag also publishes a GitHub Release with the files attached.
       - name: Publish release assets
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
