@@ -24,6 +24,7 @@
 
 enum PARAMS {
     PARAM_MODE,
+    PARAM_HOLD_MODE,
     NUM_PARAMS
 };
 
@@ -36,13 +37,19 @@ enum MODES {
     NUM_MODES
 };
 
+enum HOLD_MODES {
+    HOLD_MODE_RESET,
+    HOLD_MODE_CONT,
+    NUM_HOLD_MODES
+};
+
 START_NAMESPACE_DISTRHO
 
 // Plugin that limits MIDI to monophonic
 class Monophonic : public Plugin {
   public:
     Monophonic()
-        : Plugin(1, // Quantity of parameters
+        : Plugin(NUM_PARAMS, // Quantity of parameters
                  0, // Quantity of internal presets (enable DISTRHO_PLUGIN_WANT_PROGRAMS)
                  0  // Quantity of internal states
           ) {
@@ -93,8 +100,7 @@ class Monophonic : public Plugin {
 
     void initParameter(uint32_t index, Parameter& parameter) override {
         switch(index) {
-        case PARAM_MODE:
-            // Mode
+        case PARAM_MODE: {
             parameter.name                          = String("Mode");
             parameter.symbol                        = String("mode");
             parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
@@ -116,14 +122,32 @@ class Monophonic : public Plugin {
             parameter.enumValues.values = values;
             break;
         }
+        case PARAM_HOLD_MODE: {
+            parameter.name                          = String("Hold Mode");
+            parameter.symbol                        = String("holdmode");
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.def                    = 0;
+            parameter.enumValues.count              = NUM_HOLD_MODES;
+            parameter.enumValues.restrictedMode     = true;
+            parameter.groupId                       = 0;
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_MODES];
+            values[0].label                         = "Reset";
+            values[0].value                         = HOLD_MODE_RESET;
+            values[1].label                         = "Cont";
+            values[1].value                         = HOLD_MODE_CONT;
+            parameter.enumValues.values             = values;
+            break;
+        }
+        }
     }
 
     // Get a value from a control or parameter
     float getParameterValue(uint32_t index) const override {
         switch (index) {
-        case 0:
+        case PARAM_MODE:
             return m_nMode;
-            break;
+        case PARAM_HOLD_MODE:
+            return m_nHoldMode;
         }
         return 0;
     }
@@ -131,9 +155,13 @@ class Monophonic : public Plugin {
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
         switch (index) {
-        case 0:
+        case PARAM_MODE:
             if (value < NUM_MODES)
                 m_nMode = value;
+            break;
+        case PARAM_HOLD_MODE:
+            if (value < NUM_HOLD_MODES)
+                m_nHoldMode = value;
             break;
         }
     }
@@ -171,7 +199,9 @@ class Monophonic : public Plugin {
                     uint8_t nNextNote = 255;
                     uint8_t nPrevNote = 255;
                     bool bHold = m_anHold[chan] != 255;
-                    if (m_qNotes[chan].size())
+                    if (m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128)
+                        nPrevNote = m_anHold[chan];
+                    else if (m_qNotes[chan].size())
                         nPrevNote = m_qNotes[chan][0];
                     else if (bHold)
                         nPrevNote = m_anHold[chan];
@@ -206,6 +236,12 @@ class Monophonic : public Plugin {
                     }
                     if (m_qNotes[chan].size())
                         nNextNote = m_qNotes[chan][0];
+                    if (bHold && m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128) {
+                        if (m_nMode == MODE_HIGH && m_anHold[chan] > nNextNote)
+                            nNextNote = m_anHold[chan];
+                        else if (m_nMode == MODE_LOW && m_anHold[chan] < nNextNote)
+                            nNextNote = m_anHold[chan];
+                    }
 
                     if (nNextNote != nPrevNote) {
                         if (nPrevNote < 128 && (!bHold || nNextNote != 255)) {
@@ -245,6 +281,7 @@ class Monophonic : public Plugin {
   private:
     uint8_t m_anHold[16]; // Note number of held note. 255 if not held. 254 if hold pressed but no notes played.
     uint8_t m_nMode = MODE_HIGH; // Monophonic note priority
+    uint8_t m_nHoldMode = HOLD_MODE_RESET;
     uint8_t m_anVel[16][128]; // Store last received note-on velocity
     std::deque<uint8_t> m_qNotes[16]; // Ordered queue of held notes
 
