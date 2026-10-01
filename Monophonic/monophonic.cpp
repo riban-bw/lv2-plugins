@@ -21,10 +21,12 @@
 #define VER_BUILD 0
 
 #define CC_HOLD 64
+#define MAX_N_TRIG 5
 
 enum PARAMS {
     PARAM_MODE,
     PARAM_HOLD_MODE,
+    PARAM_N_TRIG,
     NUM_PARAMS
 };
 
@@ -85,19 +87,6 @@ class Monophonic : public Plugin {
         return (nValue << 32) | ('n' << 24) | ID_MONOPHONIC;
     }
 
-    // Inititialise controls and parameters.
-    void initPortGroup(const uint32_t groupId, PortGroup& portGroup)
-    {
-        if (groupId > 0)
-            return;
-        switch(groupId) {
-        case 0:
-            portGroup.name = String("Params");
-            portGroup.symbol = String("params");
-            break;
-        }
-    }
-
     void initParameter(uint32_t index, Parameter& parameter) override {
         switch(index) {
         case PARAM_MODE: {
@@ -107,7 +96,6 @@ class Monophonic : public Plugin {
             parameter.ranges.def                    = 1;
             parameter.enumValues.count              = NUM_MODES;
             parameter.enumValues.restrictedMode     = true;
-            parameter.groupId                       = 0;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_MODES];
             values[0].label = "Bypass";
             values[0].value = 0;
@@ -129,7 +117,6 @@ class Monophonic : public Plugin {
             parameter.ranges.def                    = 0;
             parameter.enumValues.count              = NUM_HOLD_MODES;
             parameter.enumValues.restrictedMode     = true;
-            parameter.groupId                       = 0;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_MODES];
             values[0].label                         = "Reset";
             values[0].value                         = HOLD_MODE_RESET;
@@ -138,6 +125,14 @@ class Monophonic : public Plugin {
             parameter.enumValues.values             = values;
             break;
         }
+        case PARAM_N_TRIG:
+            parameter.name                          = String("n-Trig");
+            parameter.symbol                        = String("ntrig");
+            parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
+            parameter.ranges.def                    = 1;
+            parameter.ranges.min                    = 1;
+            parameter.ranges.max                    = MAX_N_TRIG;
+            break;
         }
     }
 
@@ -148,6 +143,8 @@ class Monophonic : public Plugin {
             return m_nMode;
         case PARAM_HOLD_MODE:
             return m_nHoldMode;
+        case PARAM_N_TRIG:
+            return m_nTrigMode + 1;
         }
         return 0;
     }
@@ -163,6 +160,10 @@ class Monophonic : public Plugin {
             if (value < NUM_HOLD_MODES)
                 m_nHoldMode = value;
             break;
+        case PARAM_N_TRIG:
+            if (value > 0 && value <= MAX_N_TRIG)
+                m_nTrigMode = value - 1;
+            break;
         }
     }
 
@@ -175,12 +176,12 @@ class Monophonic : public Plugin {
                     // Hold pedal
                     if (midiEvents[j].data[2] > 63) {
                         // Hold pressed
-                        if (m_qNotes[chan].size())
-                            m_anHold[chan] = m_qNotes[chan][0];
+                        if (m_qNotes[chan].size() > m_nTrigMode)
+                            m_anHold[chan] = m_qNotes[chan][m_nTrigMode];
                         else
                             m_anHold[chan] = 254;
                     } else {
-                        if (m_anHold[chan] < 128 && m_qNotes[chan].size() == 0) {
+                        if (m_anHold[chan] < 128 && m_qNotes[chan].size() <= m_nTrigMode) {
                             // Send note off for held note
                             MidiEvent event;
                             event.size = 3;
@@ -201,8 +202,8 @@ class Monophonic : public Plugin {
                     bool bHold = m_anHold[chan] != 255;
                     if (m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128)
                         nPrevNote = m_anHold[chan];
-                    else if (m_qNotes[chan].size())
-                        nPrevNote = m_qNotes[chan][0];
+                    else if (m_qNotes[chan].size() > m_nTrigMode)
+                        nPrevNote = m_qNotes[chan][m_nTrigMode];
                     else if (bHold)
                         nPrevNote = m_anHold[chan];
 
@@ -234,8 +235,8 @@ class Monophonic : public Plugin {
                         if (it != m_qNotes[chan].end())
                             m_qNotes[chan].erase(it);
                     }
-                    if (m_qNotes[chan].size())
-                        nNextNote = m_qNotes[chan][0];
+                    if (m_qNotes[chan].size() > m_nTrigMode)
+                        nNextNote = m_qNotes[chan][m_nTrigMode];
                     if (bHold && m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128) {
                         if (m_nMode == MODE_HIGH && m_anHold[chan] > nNextNote)
                             nNextNote = m_anHold[chan];
@@ -282,6 +283,7 @@ class Monophonic : public Plugin {
     uint8_t m_anHold[16]; // Note number of held note. 255 if not held. 254 if hold pressed but no notes played.
     uint8_t m_nMode = MODE_HIGH; // Monophonic note priority
     uint8_t m_nHoldMode = HOLD_MODE_RESET;
+    uint8_t m_nTrigMode = 0;
     uint8_t m_anVel[16][128]; // Store last received note-on velocity
     std::deque<uint8_t> m_qNotes[16]; // Ordered queue of held notes
 
