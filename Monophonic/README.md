@@ -5,7 +5,8 @@ A LV2 MIDI plugin that limits MIDI to monophonic. Only one MIDI note is active, 
 
 ## Parameters
 
-Priority - Defines the priority mode of the plugin thus:
+### Priority
+Defines the priority mode of the plugin thus:
 
 Value | Description 
 ---- | ------------
@@ -15,14 +16,16 @@ Lowest | The lowest held note is played.
 Last | The last held note is played.
 First | The first held note is played.
 
-Hold Mode - Operation of hold or sustain pedal.
+### Hold Mode
+Operation of hold or sustain pedal.
 
 Value | Description
 ----- | -----------
 Reset | The last held key will be sustained. Resets when new chord held.
 Cont  | Ignores released keys. 
 
-n-Trig - Events relate to the quantity of keys held, e.g. if value = 2, the first key is ignored.
+### n-Trig
+Events relate to the quantity of keys held, e.g. if value = 2, the first key is ignored.
 
 ## Presets
 
