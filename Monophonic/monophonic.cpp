@@ -24,19 +24,19 @@
 #define MAX_N_TRIG 5
 
 enum PARAMS {
-    PARAM_MODE,
+    PARAM_PRIORITY,
     PARAM_HOLD_MODE,
     PARAM_N_TRIG,
     NUM_PARAMS
 };
 
 enum MODES {
-    MODE_BYPASS,
-    MODE_HIGH,
-    MODE_LOW,
-    MODE_LAST,
-    MODE_FIRST,
-    NUM_MODES
+    PRIORITY_BYPASS,
+    PRIORITY_HIGH,
+    PRIORITY_LOW,
+    PRIORITY_LAST,
+    PRIORITY_FIRST,
+    NUM_PRIORITIES
 };
 
 enum HOLD_MODES {
@@ -89,14 +89,14 @@ class Monophonic : public Plugin {
 
     void initParameter(uint32_t index, Parameter& parameter) override {
         switch(index) {
-        case PARAM_MODE: {
-            parameter.name                          = String("Mode");
-            parameter.symbol                        = String("mode");
+        case PARAM_PRIORITY: {
+            parameter.name                          = String("Priority");
+            parameter.symbol                        = String("priority");
             parameter.hints                         = kParameterIsAutomatable | kParameterIsInteger;
             parameter.ranges.def                    = 1;
-            parameter.enumValues.count              = NUM_MODES;
+            parameter.enumValues.count              = NUM_PRIORITIES;
             parameter.enumValues.restrictedMode     = true;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_MODES];
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_PRIORITIES];
             values[0].label = "Bypass";
             values[0].value = 0;
             values[1].label = "Highest";
@@ -117,7 +117,7 @@ class Monophonic : public Plugin {
             parameter.ranges.def                    = 0;
             parameter.enumValues.count              = NUM_HOLD_MODES;
             parameter.enumValues.restrictedMode     = true;
-            ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_MODES];
+            ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_PRIORITIES];
             values[0].label                         = "Reset";
             values[0].value                         = HOLD_MODE_RESET;
             values[1].label                         = "Cont";
@@ -139,8 +139,8 @@ class Monophonic : public Plugin {
     // Get a value from a control or parameter
     float getParameterValue(uint32_t index) const override {
         switch (index) {
-        case PARAM_MODE:
-            return m_nMode;
+        case PARAM_PRIORITY:
+            return m_nPriority;
         case PARAM_HOLD_MODE:
             return m_nHoldMode;
         case PARAM_N_TRIG:
@@ -152,9 +152,9 @@ class Monophonic : public Plugin {
     // Set a control or parameter value
     void setParameterValue(uint32_t index, float value) override {
         switch (index) {
-        case PARAM_MODE:
-            if (value < NUM_MODES)
-                m_nMode = value;
+        case PARAM_PRIORITY:
+            if (value < NUM_PRIORITIES)
+                m_nPriority = value;
             break;
         case PARAM_HOLD_MODE:
             if (value < NUM_HOLD_MODES)
@@ -170,7 +170,7 @@ class Monophonic : public Plugin {
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
         for (uint32_t j = 0; j < midiEventCount; ++j) {
-            if (m_nMode != MODE_BYPASS && midiEvents[j].kDataSize > 2) {
+            if (m_nPriority != PRIORITY_BYPASS && midiEvents[j].kDataSize > 2) {
                 uint8_t chan = midiEvents[j].data[0] & 0x0f;
                 if (((midiEvents[j].data[0] & 0xF0) == 0xB0) && midiEvents[j].data[1] == CC_HOLD) {
                     // Hold pedal
@@ -212,18 +212,18 @@ class Monophonic : public Plugin {
                         m_anVel[chan][note] = vel;
                         if (std::find(m_qNotes[chan].begin(), m_qNotes[chan].end(), note) == m_qNotes[chan].end()) {
                             // Note is not in the queue
-                            switch (m_nMode) {
-                                case MODE_LAST:
+                            switch (m_nPriority) {
+                                case PRIORITY_LAST:
                                     m_qNotes[chan].push_front(note);
                                     break;
-                                case MODE_FIRST:
+                                case PRIORITY_FIRST:
                                     m_qNotes[chan].push_back(note);
                                     break;
-                                case MODE_LOW:
+                                case PRIORITY_LOW:
                                     m_qNotes[chan].push_back(note);
                                     std::sort(m_qNotes[chan].begin(), m_qNotes[chan].end());
                                     break;
-                                case MODE_HIGH:
+                                case PRIORITY_HIGH:
                                     m_qNotes[chan].push_back(note);
                                     std::sort(m_qNotes[chan].begin(), m_qNotes[chan].end(), std::greater<uint8_t>());
                                     break;
@@ -238,9 +238,9 @@ class Monophonic : public Plugin {
                     if (m_qNotes[chan].size() > m_nTrigMode)
                         nNextNote = m_qNotes[chan][m_nTrigMode];
                     if (bHold && m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128) {
-                        if (m_nMode == MODE_HIGH && m_anHold[chan] > nNextNote)
+                        if (m_nPriority == PRIORITY_HIGH && m_anHold[chan] > nNextNote)
                             nNextNote = m_anHold[chan];
-                        else if (m_nMode == MODE_LOW && m_anHold[chan] < nNextNote)
+                        else if (m_nPriority == PRIORITY_LOW && m_anHold[chan] < nNextNote)
                             nNextNote = m_anHold[chan];
                     }
 
@@ -281,7 +281,7 @@ class Monophonic : public Plugin {
 
   private:
     uint8_t m_anHold[16]; // Note number of held note. 255 if not held. 254 if hold pressed but no notes played.
-    uint8_t m_nMode = MODE_HIGH; // Monophonic note priority
+    uint8_t m_nPriority = PRIORITY_HIGH; // Monophonic note priority
     uint8_t m_nHoldMode = HOLD_MODE_RESET;
     uint8_t m_nTrigMode = 0;
     uint8_t m_anVel[16][128]; // Store last received note-on velocity

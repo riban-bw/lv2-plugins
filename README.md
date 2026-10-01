@@ -38,6 +38,15 @@ Sends MIDI chords when a key is pressed with the right hand. The chord type is d
 
 [Documentation](https://github.com/riban-bw/lv2/tree/main/TonalChord)
 
+## Monophonic
+```
+Framework: DISTRHO
+Targets: LV2 (other targets may be enabled in each Makefile but are not tested or supported)
+```
+Filters MIDI note commands to emulate a monophonic synth.
+
+[Documentation](https://github.com/riban-bw/lv2/tree/main/Monophonic)
+
 ## Installation
 
 To install riban lv2 plugins.
