@@ -21,7 +21,7 @@ Adjust "Wet" control to adjust relative velocity of the chord to the root note. 
 ## Parameters
 Parameter | Description | Type | Minimum | Maximum
 --------- | ----------- | ---- | ------- | -------
-[C..B] Chord | Select the chord type triggered by this modifier key | List | See table below | N/A
+[C..B] Chord | Select the chord type triggered by this modifier key | List | N/A | N/A
 Split Point | Select the keyboard split between modifiers and play keys | Integer | 12 | 115
 Latched | Enable modifier key latched mode | boolean | off | on
 Wet | Relative velocity of chord and  root note | Float | 0 | 1
