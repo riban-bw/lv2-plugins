@@ -19,6 +19,7 @@ Enable the "Latch" parameter to latch the modifier key so there is no need to ho
 Adjust "Wet" control to adjust relative velocity of the chord to the root note. This allows the chord to be faded or bypassed.
 
 ## Parameters
+
 Parameter | Description | Type | Minimum | Maximum
 --------- | ----------- | ---- | ------- | -------
 [C..B] Chord | Select the chord type triggered by this modifier key | List | N/A | N/A

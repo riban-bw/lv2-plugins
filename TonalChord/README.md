@@ -12,6 +12,8 @@ Play chord with root/tonic of the selected modifier key. Different, tonally rela
 
 Adjust "Wet" control to adjust relative velocity of the chord to the root note. This allows the chord to be faded or bypassed.
 
+All other MIDI commands are passed through to output unmodified.
+
 ## Parameters
 Parameter | Description | Type | Minimum | Maximum
 --------- | ----------- | ---- | ------- | -------
