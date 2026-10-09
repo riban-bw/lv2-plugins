@@ -173,28 +173,31 @@ class Monophonic : public Plugin {
     // Process audio and MIDI input.
     void run(const float**, float**, uint32_t, const MidiEvent* midiEvents, uint32_t midiEventCount) override {
         for (uint32_t j = 0; j < midiEventCount; ++j) {
-            if (m_nPriority != PRIORITY_BYPASS && midiEvents[j].kDataSize > 2) {
-                uint8_t chan = midiEvents[j].data[0] & 0x0f;
-                if (m_nTrigMode != HOLD_MODE_NONE && ((midiEvents[j].data[0] & 0xF0) == 0xB0) && midiEvents[j].data[1] == CC_HOLD) {
+            bool bProcessed = m_nPriority != PRIORITY_BYPASS && midiEvents[j].kDataSize > 2;
+            if (bProcessed) {
+                uint8_t nChan = midiEvents[j].data[0] & 0x0f;
+                if (m_nHoldMode != HOLD_MODE_NONE && ((midiEvents[j].data[0] & 0xF0) == 0xB0) && midiEvents[j].data[1] == CC_HOLD) {
                     // Hold pedal
                     if (midiEvents[j].data[2] > 63) {
                         // Hold pressed
-                        if (m_qNotes[chan].size() > m_nTrigMode)
-                            m_anHold[chan] = m_qNotes[chan][m_nTrigMode];
-                        else
-                            m_anHold[chan] = 254;
+                        if (m_anHold[nChan] == 255) {
+                            if (m_qNotes[nChan].size() > m_nTrigMode)
+                                m_anHold[nChan] = m_qNotes[nChan][m_nTrigMode];
+                            else
+                                m_anHold[nChan] = 254;
+                        }
                     } else {
-                        if (m_anHold[chan] < 128 && m_qNotes[chan].size() <= m_nTrigMode) {
+                        if (m_anHold[nChan] < 128 && m_qNotes[nChan].size() <= m_nTrigMode) {
                             // Send note off for held note
                             MidiEvent event;
                             event.size = 3;
                             event.frame = midiEvents[j].frame;
-                            event.data[0] = 0x90 | chan;
-                            event.data[1] = m_anHold[chan];
+                            event.data[0] = 0x90 | nChan;
+                            event.data[1] = m_anHold[nChan];
                             event.data[2] = 0;
                             writeMidiEvent(event);
                         }
-                        m_anHold[chan] = 255;
+                        m_anHold[nChan] = 255;
                     }
                 } else if ((midiEvents[j].data[0] & 0xE0) == 0x80) {
                     // Note on or off
@@ -202,83 +205,85 @@ class Monophonic : public Plugin {
                     uint8_t vel = midiEvents[j].data[2];
                     uint8_t nNextNote = 255;
                     uint8_t nPrevNote = 255;
-                    bool bHold = m_anHold[chan] != 255;
-                    if (m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128)
-                        nPrevNote = m_anHold[chan];
-                    else if (m_qNotes[chan].size() > m_nTrigMode)
-                        nPrevNote = m_qNotes[chan][m_nTrigMode];
+                    bool bHold = m_anHold[nChan] != 255;
+                    if (m_nHoldMode == HOLD_MODE_CONT && m_anHold[nChan] < 128)
+                        nPrevNote = m_anHold[nChan];
+                    else if (m_qNotes[nChan].size() > m_nTrigMode)
+                        nPrevNote = m_qNotes[nChan][m_nTrigMode];
                     else if (bHold)
-                        nPrevNote = m_anHold[chan];
+                        nPrevNote = m_anHold[nChan];
 
                     if (((midiEvents[j].data[0] & 0xf0) == 0x90) && vel) {
                         // Note on
-                        m_anVel[chan][note] = vel;
-                        if (std::find(m_qNotes[chan].begin(), m_qNotes[chan].end(), note) == m_qNotes[chan].end()) {
+                        m_anVel[nChan][note] = vel;
+                        if (std::find(m_qNotes[nChan].begin(), m_qNotes[nChan].end(), note) == m_qNotes[nChan].end()) {
                             // Note is not in the queue
                             switch (m_nPriority) {
                                 case PRIORITY_LAST:
-                                    m_qNotes[chan].push_front(note);
+                                    m_qNotes[nChan].push_front(note);
                                     break;
                                 case PRIORITY_FIRST:
-                                    m_qNotes[chan].push_back(note);
+                                    m_qNotes[nChan].push_back(note);
                                     break;
                                 case PRIORITY_LOW:
-                                    m_qNotes[chan].push_back(note);
-                                    std::sort(m_qNotes[chan].begin(), m_qNotes[chan].end());
+                                    m_qNotes[nChan].push_back(note);
+                                    std::sort(m_qNotes[nChan].begin(), m_qNotes[nChan].end());
                                     break;
                                 case PRIORITY_HIGH:
-                                    m_qNotes[chan].push_back(note);
-                                    std::sort(m_qNotes[chan].begin(), m_qNotes[chan].end(), std::greater<uint8_t>());
+                                    m_qNotes[nChan].push_back(note);
+                                    std::sort(m_qNotes[nChan].begin(), m_qNotes[nChan].end(), std::greater<uint8_t>());
                                     break;
                             }
                         }
                     } else {
                         // Note off
-                        auto it = std::find(m_qNotes[chan].begin(), m_qNotes[chan].end(), note);
-                        if (it != m_qNotes[chan].end())
-                            m_qNotes[chan].erase(it);
+                        auto it = std::find(m_qNotes[nChan].begin(), m_qNotes[nChan].end(), note);
+                        if (it != m_qNotes[nChan].end())
+                            m_qNotes[nChan].erase(it);
                     }
-                    if (m_qNotes[chan].size() > m_nTrigMode)
-                        nNextNote = m_qNotes[chan][m_nTrigMode];
-                    if (bHold && m_nHoldMode == HOLD_MODE_CONT && m_anHold[chan] < 128) {
-                        if (m_nPriority == PRIORITY_HIGH && m_anHold[chan] > nNextNote)
-                            nNextNote = m_anHold[chan];
-                        else if (m_nPriority == PRIORITY_LOW && m_anHold[chan] < nNextNote)
-                            nNextNote = m_anHold[chan];
+                    if (m_qNotes[nChan].size() > m_nTrigMode)
+                        nNextNote = m_qNotes[nChan][m_nTrigMode];
+                    if (bHold && m_nHoldMode == HOLD_MODE_CONT && m_anHold[nChan] < 128) {
+                        if (m_nPriority == PRIORITY_HIGH && m_anHold[nChan] > nNextNote)
+                            nNextNote = m_anHold[nChan];
+                        else if (m_nPriority == PRIORITY_LOW && m_anHold[nChan] < nNextNote)
+                            nNextNote = m_anHold[nChan];
                     }
 
                     if (nNextNote != nPrevNote) {
                         if (nPrevNote < 128 && (!bHold || nNextNote != 255)) {
-                            if (bHold && m_anHold[chan] < 128)
-                                nPrevNote = m_anHold[chan];
+                            if (bHold && m_anHold[nChan] < 128)
+                                nPrevNote = m_anHold[nChan];
                             // Silence previous sounding note
                             MidiEvent event;
                             event.size = 3;
                             event.frame = midiEvents[j].frame;
-                            event.data[0] = 0x90 | chan;
+                            event.data[0] = 0x90 | nChan;
                             event.data[1] = nPrevNote;
                             event.data[2] = 0;
                             writeMidiEvent(event);
-                            if (m_anHold[chan] != 255)
-                                m_anHold[chan] = 254;
+                            if (m_anHold[nChan] != 255)
+                                m_anHold[nChan] = 254;
                         }
                         if (nNextNote != 255) {
                             // Play next note
                             MidiEvent event;
                             event.size = 3;
                             event.frame = midiEvents[j].frame;
-                            event.data[0] = 0x90 | chan;
+                            event.data[0] = 0x90 | nChan;
                             event.data[1] = nNextNote;
-                            event.data[2] = m_anVel[chan][nNextNote];
+                            event.data[2] = m_anVel[nChan][nNextNote];
                             writeMidiEvent(event);
-                            if (m_anHold[chan] != 255)
-                                m_anHold[chan] = nNextNote;
+                            if (m_anHold[nChan] != 255)
+                                m_anHold[nChan] = nNextNote;
                         }
                     }
+                } else {
+                    bProcessed = false;
                 }
-            } else {
-                writeMidiEvent(midiEvents[j]); // Pass through unprocessed MIDI data
             }
+            if (!bProcessed)
+                writeMidiEvent(midiEvents[j]); // Pass through unprocessed MIDI data
         }
     }
 
