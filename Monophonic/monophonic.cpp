@@ -40,6 +40,7 @@ enum MODES {
 };
 
 enum HOLD_MODES {
+    HOLD_MODE_NONE,
     HOLD_MODE_RESET,
     HOLD_MODE_CONT,
     NUM_HOLD_MODES
@@ -118,10 +119,12 @@ class Monophonic : public Plugin {
             parameter.enumValues.count              = NUM_HOLD_MODES;
             parameter.enumValues.restrictedMode     = true;
             ParameterEnumerationValue* const values = new ParameterEnumerationValue[NUM_PRIORITIES];
-            values[0].label                         = "Reset";
-            values[0].value                         = HOLD_MODE_RESET;
-            values[1].label                         = "Cont";
-            values[1].value                         = HOLD_MODE_CONT;
+            values[HOLD_MODE_NONE].label            = "None";
+            values[HOLD_MODE_NONE].value            = HOLD_MODE_NONE;
+            values[HOLD_MODE_RESET].label           = "Reset";
+            values[HOLD_MODE_RESET].value           = HOLD_MODE_RESET;
+            values[HOLD_MODE_CONT].label            = "Cont";
+            values[HOLD_MODE_CONT].value            = HOLD_MODE_CONT;
             parameter.enumValues.values             = values;
             break;
         }
@@ -172,7 +175,7 @@ class Monophonic : public Plugin {
         for (uint32_t j = 0; j < midiEventCount; ++j) {
             if (m_nPriority != PRIORITY_BYPASS && midiEvents[j].kDataSize > 2) {
                 uint8_t chan = midiEvents[j].data[0] & 0x0f;
-                if (((midiEvents[j].data[0] & 0xF0) == 0xB0) && midiEvents[j].data[1] == CC_HOLD) {
+                if (m_nTrigMode != HOLD_MODE_NONE && ((midiEvents[j].data[0] & 0xF0) == 0xB0) && midiEvents[j].data[1] == CC_HOLD) {
                     // Hold pedal
                     if (midiEvents[j].data[2] > 63) {
                         // Hold pressed
